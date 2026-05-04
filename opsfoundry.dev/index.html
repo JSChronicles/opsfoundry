@@ -62,26 +62,12 @@
       text-align: center;
     }
 
-    .content {
-      display: grid;
-      gap: 18px;
-      margin-top: 36px;
-      color: var(--muted);
-      font-size: 1.05rem;
-    }
-
-    .content p {
-      margin: 0;
-    }
-
     .coming-soon {
-      margin-top: 34px;
-      padding-top: 24px;
-      border-top: 1px solid var(--line);
+      margin-top: 36px;
     }
 
     .coming-soon h2 {
-      margin: 0 0 16px;
+      margin: 0 0 18px;
       color: var(--text);
       font-size: 0.9rem;
       font-weight: 700;
@@ -91,48 +77,57 @@
 
     .soon-list {
       display: grid;
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
       margin: 0;
       padding: 0;
       list-style: none;
     }
 
     .soon-list li {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(48, 54, 61, 0.65);
+      display: grid;
+      gap: 12px;
+      min-height: 180px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
       color: var(--muted);
     }
 
     .soon-project {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
       min-width: 0;
     }
 
     .soon-icon {
-      width: 28px;
-      height: 28px;
+      width: 72px;
+      height: 72px;
       object-fit: contain;
       flex: 0 0 auto;
     }
 
+    .soon-list p {
+      margin: 0;
+      font-size: 0.98rem;
+    }
+
+    .soon-list .status {
+      align-self: end;
+      color: #7d8590;
+      font-size: 0.82rem;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     .soon-list strong {
       color: var(--text);
-      font-weight: 650;
-    }
-
-    .highlight {
-      color: var(--text);
-    }
-
-    footer {
-      margin-top: 42px;
-      color: #7d8590;
-      font-size: 0.9rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.15;
     }
 
     @media (max-width: 520px) {
@@ -145,13 +140,14 @@
         padding-bottom: 32px;
       }
 
-      .content {
-        font-size: 1rem;
-      }
-
       .soon-list li {
-        display: grid;
-        gap: 6px;
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .soon-list {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -164,11 +160,6 @@
         <p class="tagline">this just beginning.</p>
       </section>
 
-      <section class="content" aria-label="About Ops Foundry">
-        <p>Anvil, a declarative execution engine for running Python tasks across AWS accounts, regions, and organizations.</p>
-        <p>Foundry, Forge, guides, templates, and engineering notes will follow.</p>
-      </section>
-
       <section class="coming-soon" aria-labelledby="coming-soon-title">
         <h2 id="coming-soon-title">Coming soon</h2>
         <ul class="soon-list">
@@ -177,23 +168,32 @@
               <img class="soon-icon" src="images/anvil.png" alt="" aria-hidden="true">
               <strong>Anvil</strong>
             </span>
-            <span>Documentation first</span>
+            <p>A declarative execution engine for running Python tasks across AWS accounts, regions, and organizations.</p>
+            <span class="status">In testing</span>
           </li>
           <li>
             <span class="soon-project">
               <img class="soon-icon" src="images/foundry.png" alt="" aria-hidden="true">
               <strong>Foundry</strong>
             </span>
-            <span>Project notes later</span>
+            <p>A GitOps-driven infrastructure-as-code framework for managing GitHub organizations, repositories, rulesets, environments, and security policies at scale.</p>
+            <span class="status">Planned</span>
           </li>
           <li>
             <span class="soon-project">
               <img class="soon-icon" src="images/forge.png" alt="" aria-hidden="true">
               <strong>Forge</strong>
             </span>
-            <span>Project notes later</span>
+            <p>GitHub organizations managed by Foundry. Each forge owns the repositories, rules, environments, and policies for its org.</p>
+            <span class="status">Planned</span>
           </li>
-          <li><strong>Guides and templates</strong><span>Reusable engineering patterns</span></li>
+          <li>
+            <span class="soon-project">
+              <strong>Guides and notes</strong>
+            </span>
+            <p>Practical guides, templates, and engineering notes collected as the documentation hub grows.</p>
+            <span class="status">Later</span>
+          </li>
         </ul>
       </section>
 
