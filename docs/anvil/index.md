@@ -1,5 +1,9 @@
 # Anvil
 
+<p align="center">
+  <img src="../images/anvil.png" alt="Anvil" width="160">
+</p>
+
 Anvil is a declarative AWS execution engine for running Python tasks across
 large account and region fleets.
 
@@ -38,3 +42,9 @@ validation, and CI outside of the main Anvil repository.
   authenticates, assumes roles, and schedules account-region work.
 - Read the [CLI reference](cli.md) for the main command groups and result
   commands.
+- Read the [task contract](task-contract.md) for custom task discovery,
+  validation, and the `run(...)` interface.
+- Read [configuration](configuration.md) for target, region, concurrency, and
+  metadata concepts.
+- Read [examples](examples.md) for GitHub Actions, result queries, reruns, and
+  benchmark notes.
