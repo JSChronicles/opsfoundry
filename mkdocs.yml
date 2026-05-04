@@ -19,7 +19,6 @@ nav:
   - Home: index.md
   - Anvil:
       - Overview: anvil/index.md
-      - In-depth README: anvil/in-depth.md
       - Execution Model: anvil/execution-model.md
       - CLI: anvil/cli.md
 
@@ -29,8 +28,3 @@ extra_css:
 markdown_extensions:
   - attr_list
   - md_in_html
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format

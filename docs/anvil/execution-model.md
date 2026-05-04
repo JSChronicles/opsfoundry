@@ -25,82 +25,20 @@ At a high level:
 ```mermaid
 flowchart TD
     A["Run command"] --> B["Load YAML"]
-    B --> C["Start target pipeline"]
-
-    C --> D["Prepare targets in parallel<br/>bounded by<br/>max parallel targets"]
-    D --> E{"Target prepared"}
-    E --> F["Auth check"]
-    F --> G{"Auth OK?"}
-
-    G -->|No| H["Record auth result<br/>skip execution"]
-    G -->|Yes| I["Apply run-time overrides"]
-    I --> J["Resolve task graph"]
-    J --> K["Build execution context"]
-    K --> L["Ready queue"]
-
-    L --> M{"Execution slot open<br/>and org not already active?"}
-    M -->|No| N["Wait in ready queue"]
-    M -->|Yes| O{"Target type?"}
-
-    O -->|Organization| P1
-    O -->|Accounts| Q1
-
-    subgraph LEFT["Organization target"]
-        direction TD
-        P1["Create base session"]
-        P1 --> P2["Read org identity"]
-        P2 --> P3["Discover active accounts"]
-        P3 --> P4["Discover region statuses"]
-        P4 --> P5["Validate configured regions"]
-        P5 --> P6["Apply include/exclude filters"]
-        P6 --> P7["Build account list"]
-    end
-
-    subgraph RIGHT["Explicit accounts target"]
-        direction TD
-        Q1["Create base session"]
-        Q1 --> Q2["Read explicit account list"]
-        Q2 --> Q3["Build account list"]
-    end
-
-    P7 --> R["Create account worker pool"]
-    Q3 --> R
-
-    R --> S["Dispatch accounts in parallel<br/>bounded by per-target max workers"]
-    S --> T["Worker executes one account"]
-
-    T --> U{"Management account?"}
-    U -->|Yes| V["Reuse worker session<br/>for region"]
-    U -->|No| W["Assume role once<br/>for account"]
-    W --> X["Create region session<br/>from assumed credentials"]
-
-    V --> C1["Wrap account-region session<br/>with lazy client cache"]
-    X --> C1
-    C1 --> Y["Run tasks by region<br/>in dependency order"]
-
-    Y --> YA{"More tasks or regions?"}
-    YA -->|Yes| Y
-    YA -->|No| Z{"Failure with fail-fast?"}
-
-    Z -->|No| AA["Continue account work"]
-    Z -->|Yes| AB["Set cancellation signal"]
-    AB --> AC["Stop pending account work"]
-
-    AA --> AD["Account result"]
-    AC --> AD
-
-    AD --> AE["Target result"]
-    AE --> AF["Release org slot if needed"]
-    AF --> AG["Record target result<br/>in input order"]
-
-    H --> AH{"More prep or<br/>execution work?"}
-    N --> AH
-    AG --> AH
-    AH -->|Yes| E
-    AH -->|No| AI["Build ordered auth results"]
-    AI --> AJ["Build ordered target results"]
-    AJ --> AK["Compute engine state"]
-    AK --> AL["Return engine result"]
+    B --> C["Validate configuration"]
+    C --> D["Prepare targets"]
+    D --> E["Authenticate"]
+    E --> F{"Target type?"}
+    F -->|Organization| G["Discover accounts and regions"]
+    F -->|Explicit accounts| H["Build account list"]
+    G --> I["Create account worker pool"]
+    H --> I
+    I --> J["Execute accounts in parallel"]
+    J --> K["Assume role for member accounts"]
+    K --> L["Run tasks by region in dependency order"]
+    L --> M["Record task and account results"]
+    M --> N["Build target result"]
+    N --> O["Build engine result"]
 ```
 
 ## Multi-Organization Execution
