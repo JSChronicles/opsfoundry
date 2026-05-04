@@ -9,34 +9,34 @@
   --ops-accent: #58a6ff;
 }
 
-.md-header,
-.md-tabs,
-.md-sidebar,
-.md-footer,
-.md-content__button {
+body:has(.landing) .md-header,
+body:has(.landing) .md-tabs,
+body:has(.landing) .md-sidebar,
+body:has(.landing) .md-footer,
+body:has(.landing) .md-content__button {
   display: none;
 }
 
-.md-container,
-.md-main {
+body:has(.landing) .md-container,
+body:has(.landing) .md-main {
   background: var(--ops-bg);
 }
 
-.md-main__inner {
+body:has(.landing) .md-main__inner {
   max-width: none;
   margin: 0;
 }
 
-.md-content {
+body:has(.landing) .md-content {
   max-width: none;
 }
 
-.md-content__inner {
+body:has(.landing) .md-content__inner {
   margin: 0;
   padding: 0;
 }
 
-.md-content__inner::before {
+body:has(.landing) .md-content__inner::before {
   display: none;
 }
 
