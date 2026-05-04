@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Ops Foundry is a documentation hub for DevOps, cloud automation, infrastructure tooling, and reusable engineering patterns.">
+  <meta name="description" content="Ops Foundry is a documentation hub for anvil, foundry, forge, guides, and related templates.">
   <title>Ops Foundry</title>
   <style>
     :root {
@@ -74,6 +74,57 @@
       margin: 0;
     }
 
+    .coming-soon {
+      margin-top: 34px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+
+    .coming-soon h2 {
+      margin: 0 0 16px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .soon-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .soon-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.65);
+      color: var(--muted);
+    }
+
+    .soon-project {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .soon-icon {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
+    .soon-list strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
     .highlight {
       color: var(--text);
     }
@@ -97,6 +148,11 @@
       .content {
         font-size: 1rem;
       }
+
+      .soon-list li {
+        display: grid;
+        gap: 6px;
+      }
     }
   </style>
 </head>
@@ -109,14 +165,38 @@
       </section>
 
       <section class="content" aria-label="About Ops Foundry">
-        <p>Ops Foundry is a documentation hub for DevOps, cloud automation, infrastructure tooling, and reusable engineering patterns.</p>
-        <p>The first project documented here will be Anvil, a declarative execution engine for running Python tasks across AWS accounts, regions, and organizations.</p>
+        <p>Anvil, a declarative execution engine for running Python tasks across AWS accounts, regions, and organizations.</p>
         <p>Foundry, Forge, guides, templates, and engineering notes will follow.</p>
       </section>
 
-      <footer>
-        <p>Temporary landing page for opsfoundry.dev.</p>
-      </footer>
+      <section class="coming-soon" aria-labelledby="coming-soon-title">
+        <h2 id="coming-soon-title">Coming soon</h2>
+        <ul class="soon-list">
+          <li>
+            <span class="soon-project">
+              <img class="soon-icon" src="images/anvil.png" alt="" aria-hidden="true">
+              <strong>Anvil</strong>
+            </span>
+            <span>Documentation first</span>
+          </li>
+          <li>
+            <span class="soon-project">
+              <img class="soon-icon" src="images/foundry.png" alt="" aria-hidden="true">
+              <strong>Foundry</strong>
+            </span>
+            <span>Project notes later</span>
+          </li>
+          <li>
+            <span class="soon-project">
+              <img class="soon-icon" src="images/forge.png" alt="" aria-hidden="true">
+              <strong>Forge</strong>
+            </span>
+            <span>Project notes later</span>
+          </li>
+          <li><strong>Guides and templates</strong><span>Reusable engineering patterns</span></li>
+        </ul>
+      </section>
+
     </div>
   </main>
 </body>
