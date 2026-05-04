@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ops Foundry is a documentation hub for DevOps, cloud automation, infrastructure tooling, and reusable engineering patterns.">
+  <title>Ops Foundry</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --panel: #151b23;
+      --text: #f0f6fc;
+      --muted: #9ba7b4;
+      --line: #30363d;
+      --accent: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    main {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 48px 20px;
+    }
+
+    .wrap {
+      width: min(100%, 760px);
+    }
+
+    .hero {
+      padding: 32px 0 40px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3rem, 10vw, 6.5rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-align: center;
+    }
+
+    .tagline {
+      margin: 18px 0 0;
+      color: var(--accent);
+      font-size: clamp(1.35rem, 4vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .content {
+      display: grid;
+      gap: 18px;
+      margin-top: 36px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .content p {
+      margin: 0;
+    }
+
+    .highlight {
+      color: var(--text);
+    }
+
+    footer {
+      margin-top: 42px;
+      color: #7d8590;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 520px) {
+      main {
+        place-items: start center;
+        padding-top: 72px;
+      }
+
+      .hero {
+        padding-bottom: 32px;
+      }
+
+      .content {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="wrap">
+      <section class="hero" aria-labelledby="site-title">
+        <h1 id="site-title">Ops Foundry</h1>
+        <p class="tagline">this just beginning.</p>
+      </section>
+
+      <section class="content" aria-label="About Ops Foundry">
+        <p class="highlight">This is just the beginning.</p>
+        <p>Ops Foundry is a documentation hub for DevOps, cloud automation, infrastructure tooling, and reusable engineering patterns.</p>
+        <p>The first project documented here will be Anvil, a declarative execution engine for running Python tasks across AWS accounts, regions, and organizations.</p>
+        <p>Foundry, Forge, guides, templates, and engineering notes will follow.</p>
+      </section>
+
+      <footer>
+        <p>Temporary landing page for opsfoundry.dev.</p>
+      </footer>
+    </div>
+  </main>
+</body>
+</html>
