@@ -1,0 +1,30 @@
+site_name: Ops Foundry
+site_url: https://opsfoundry.dev/
+site_description: Documentation hub for Anvil, Foundry, Forge, guides, and related templates.
+
+theme:
+  name: material
+  language: en
+  palette:
+    scheme: slate
+    primary: black
+    accent: blue
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Home: index.md
+  - Anvil:
+      - Overview: anvil/index.md
+      - Execution Model: anvil/execution-model.md
+      - CLI: anvil/cli.md
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - attr_list
+  - md_in_html

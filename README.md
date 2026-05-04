@@ -1,6 +1,6 @@
 # Ops Foundry
 
-This repository contains the temporary static landing page for
+This repository contains the documentation site source for
 [opsfoundry.dev](https://opsfoundry.dev).
 
 Ops Foundry will become a centralized documentation hub for DevOps, cloud
@@ -10,13 +10,24 @@ documentation.
 The first project documented here will be Anvil. Future documentation may
 include Foundry, Forge, guides, templates, and engineering notes.
 
-This is a Phase 0 placeholder site. Full MkDocs documentation will be added
-later.
+This is currently a Phase 0 MkDocs site with a simple landing page. Full
+project documentation will be added later.
+
+## Local preview
+
+Install the documentation dependencies and run MkDocs with `uv`:
+
+```sh
+uv sync --locked
+uv run mkdocs serve
+```
+
+The local site will be available at <http://127.0.0.1:8000/>.
 
 ## GitHub Pages
 
-Deploy this site from the repository root using GitHub Pages, then configure the
-custom domain as `opsfoundry.dev`.
+This repository deploys with GitHub Actions. GitHub Pages should be configured
+with **Source: GitHub Actions** and the custom domain `opsfoundry.dev`.
 
 ## License
 
