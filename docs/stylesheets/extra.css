@@ -103,7 +103,12 @@
   list-style: none;
 }
 
+.soon-list ::marker {
+  content: "";
+}
+
 .soon-list li {
+  margin: 0;
   padding: 20px;
   border: 1px solid var(--ops-line);
   border-radius: 8px;
