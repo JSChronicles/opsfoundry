@@ -46,5 +46,5 @@ validation, and CI outside of the main Anvil repository.
   validation, and the `run(...)` interface.
 - Read [configuration](configuration.md) for target, region, concurrency, and
   metadata concepts.
-- Read [examples](examples.md) for GitHub Actions, result queries, reruns, and
-  benchmark notes.
+- Read [examples](examples.md) for the repository template, GitHub Actions, and
+  standalone multi-account script template.

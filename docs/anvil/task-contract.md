@@ -59,6 +59,60 @@ def run(
 The return value is optional. Any returned data may be included in execution
 results.
 
+## Returned Results
+
+A task can return any JSON-serializable value from `run()`. Returned data is the
+native baseline for structured task output. It is stored under each task
+result's `result` field and is useful for inventory, measurements, findings,
+resource IDs, counts, timing, and other task-specific data.
+
+```python
+def run(
+    *,
+    account_id: str,
+    account_alias: str,
+    session,
+    dry_run: bool,
+    metadata: dict[str, object],
+    actions=None,
+) -> dict[str, object]:
+    user_name = str(metadata["user_name"])
+    iam = session.client("iam")
+    groups = [
+        group["GroupName"]
+        for group in iam.list_groups_for_user(UserName=user_name)["Groups"]
+    ]
+
+    return {
+        "user_name": user_name,
+        "dry_run": dry_run,
+        "groups": groups,
+        "summary": {"groups": len(groups)},
+    }
+```
+
+The returned value appears in the task result:
+
+```json
+{
+  "task": "function_returned_results",
+  "region": "us-east-1",
+  "status": "success",
+  "result": {
+    "user_name": "example-user",
+    "dry_run": false,
+    "groups": ["Developers"],
+    "summary": {
+      "groups": 1
+    }
+  },
+  "error": null
+}
+```
+
+Returned data is also available in the flattened JSONL query artifact. See
+[CLI results](cli.md#results) for query examples.
+
 ## ActionRecorder
 
 Tasks can use Anvil-provided utilities to produce structured results.
@@ -70,6 +124,48 @@ Tasks can use Anvil-provided utilities to produce structured results.
 
 Using these utilities is not required, but it is recommended for tasks that
 modify infrastructure or need richer audit output.
+
+Record concise audit-level actions from a task:
+
+```python
+from anvil.actions import ActionRecorder
+
+def run(
+    *,
+    account_id: str,
+    account_alias: str,
+    session,
+    dry_run: bool,
+    metadata: dict[str, object],
+    actions: ActionRecorder,
+) -> None:
+    if dry_run:
+        actions.record("(dry-run) Would validate account configuration")
+    else:
+        actions.record("Validated account configuration")
+```
+
+## Choosing a Result Channel
+
+Use returned results when the task needs to report structured data:
+
+- inventory lists
+- counts and measurements
+- validation findings
+- resource IDs and metadata
+- timing or diagnostic values
+
+Use `ActionRecorder` when the task needs a concise audit trail:
+
+- created, updated, or deleted resources
+- skipped resources and decisions
+- dry-run planned actions
+- governance or cleanup outcomes
+
+Production tasks may use both channels when that is useful.
+
+See the [Anvil Results examples](https://github.com/JSChronicles/anvil/tree/main/examples/Results)
+for complete returned-result and `ActionRecorder` examples.
 
 ## Task Validation
 
