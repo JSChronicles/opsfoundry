@@ -24,11 +24,16 @@ nav:
       - Task Contract: anvil/task-contract.md
       - Configuration: anvil/configuration.md
       - Examples: anvil/examples.md
+  - Guides and notes:
+      - Overview: guides/index.md
+      - Dependabot Best Practices: guides/dependabot-best-practices.md
+      - Dependabot Auto-Approval: guides/dependabot-auto-approval.md
 
 extra_css:
   - stylesheets/extra.css
 
 markdown_extensions:
+  - admonition
   - attr_list
   - md_in_html
   - pymdownx.superfences:

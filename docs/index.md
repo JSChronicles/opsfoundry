@@ -36,11 +36,13 @@
             <span class="status">Planned</span>
           </li>
           <li>
-            <span class="soon-project">
-              <strong>Guides and notes</strong>
-            </span>
-            <p>Practical guides, templates, and engineering notes collected as the documentation hub grows.</p>
-            <span class="status">Later</span>
+            <a class="project-card-link" href="guides/">
+              <span class="soon-project">
+                <strong>Guides and notes</strong>
+              </span>
+              <p>Practical guides, templates, and engineering notes collected as the documentation hub grows.</p>
+              <span class="status">Available</span>
+            </a>
           </li>
         </ul>
       </section>
