@@ -10,16 +10,16 @@ documentation.
 The first project documented here will be Anvil. Future documentation may
 include Foundry, Forge, guides, templates, and engineering notes.
 
-This is currently a Phase 0 MkDocs site with a simple landing page. Full
+This is currently a Phase 0 Zensical site with a simple landing page. Full
 project documentation will be added later.
 
 ## Local preview
 
-Install the documentation dependencies and run MkDocs with `uv`:
+Install the documentation dependencies and run Zensical with `uv`:
 
 ```sh
 uv sync --locked
-uv run mkdocs serve
+uv run zensical serve
 ```
 
 The local site will be available at <http://127.0.0.1:8000/>.

@@ -1,0 +1,47 @@
+[project]
+site_name = "Ops Foundry"
+site_url = "https://opsfoundry.dev/"
+site_description = "Documentation hub for Anvil, Foundry, Forge, guides, and related templates."
+extra_css = ["stylesheets/extra.css"]
+nav = [
+  { "Home" = "index.md" },
+  { "Anvil" = [
+    { "Overview" = "anvil/index.md" },
+    { "Execution Model" = "anvil/execution-model.md" },
+    { "CLI" = "anvil/cli.md" },
+    { "Task Contract" = "anvil/task-contract.md" },
+    { "Configuration" = "anvil/configuration.md" },
+    { "Examples" = "anvil/examples.md" },
+  ] },
+  { "Guides and notes" = [
+    { "Overview" = "guides/index.md" },
+    { "Dependabot Best Practices" = "guides/dependabot-best-practices.md" },
+    { "Dependabot Auto-Approval" = "guides/dependabot-auto-approval.md" },
+  ] },
+]
+
+[project.theme]
+variant = "classic"
+language = "en"
+features = [
+  "navigation.instant",
+  "navigation.tracking",
+  "search.suggest",
+  "search.highlight",
+]
+
+[project.theme.palette]
+scheme = "slate"
+primary = "black"
+accent = "blue"
+
+[project.markdown_extensions.admonition]
+
+[project.markdown_extensions.attr_list]
+
+[project.markdown_extensions.md_in_html]
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]

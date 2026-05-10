@@ -22,7 +22,6 @@ Use names that make the dependency source obvious in commit history, pull reques
 | Group name | Ecosystem or manifest family | `uv-dependencies` |
 | Commit prefix | `chore(<ecosystem>)` | `chore(uv)` |
 | Labels | `dependencies` plus ecosystem labels | `dependencies`, `python`, `uv` |
-| Workflow labels | Match the automation surface | `dependencies`, `github-actions` |
 
 Prefer stable names over clever ones. Names like `uv-dependencies`, `github-actions`, and `pre-commit` are easy to search and map directly to the package ecosystem that created the pull request.
 
@@ -49,7 +48,7 @@ schedule:
   timezone: "America/Chicago"
 ```
 
-Use `cooldown.default-days` to delay routine version update pull requests. A seven-day cooldown gives maintainers and upstream projects time to catch broken releases, bad tags, or fast follow-up patches before Dependabot opens a pull request.
+Use `cooldown.default-days` to delay routine version update pull requests. A 7 day cooldown gives maintainers and upstream projects time to catch broken releases, bad tags, or fast follow-up patches before Dependabot opens a pull request. 14 days is even better but yo don't gain much past that.
 
 ```yaml
 cooldown:
