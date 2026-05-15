@@ -38,17 +38,6 @@ Then allow GitHub Actions to approve pull requests:
 1. Open the repository > Settings > Actions > General > Workflow permissions
   1. Check Allow GitHub Actions to create and approve pull requests.
 
-### CODEOWNERS
-Add the specific file path to the CODEOWNERS file, with the allowed approver or team as owner. This is to ensure that the dependabot
-
-```yaml
-# Protect the workflow that can approve Dependabot PRs with GITHUB_TOKEN.
-/.github/workflows/dependabot-auto-approve.yaml @username
-
-# or a team setup
-/.github/workflows/dependabot-auto-approve.yaml @your-org/repo-admins
-```
-
 ### Workflow
 
 Add `dependabot-auto-approve.yaml` to `.github/workflows/`
@@ -154,9 +143,24 @@ Use the GitHub App client ID and the full private key contents.
 
 If these are organization-level Dependabot secrets, grant access to each repository that should use this automation.
 
+
+### CODEOWNERS
+
+Add the auto-approval workflow path to the CODEOWNERS file, with the repository admin, maintainer, or trusted maintainer team as owner. Pair this with branch protection or rulesets that require code owner review for workflow changes.
+
+This keeps contributors from changing the workflow that can mint the GitHub App token and approve Dependabot pull requests.
+
+```yaml
+# Protect the workflow that can approve Dependabot PRs with the GitHub App token.
+/.github/workflows/dependabot-auto-approve.yaml @username
+
+# or a team setup
+/.github/workflows/dependabot-auto-approve.yaml @your-org/repo-admins
+```
+
 ### Workflow
 
-Add `dependabot-auto-approve-multi-contributors.yaml` to `.github/workflows/`
+Add `dependabot-auto-approve.yaml` to `.github/workflows/`
 
 
 This workflow creates a GitHub App installation token and uses that token for pull request approval and auto-merge.
