@@ -10,3 +10,13 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["N", "E4", "E7", "E9", "F"]
+task-tags = ["TODO", "FIXME", "HACK"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true

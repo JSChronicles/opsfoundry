@@ -15,6 +15,10 @@ nav = [
   ] },
   { "Guides and notes" = [
     { "Overview" = "guides/index.md" },
+    { "AWS OIDC for GitHub Actions" = "guides/aws-oidc-github-actions.md" },
+    { "GitHub Best Practices" = "guides/github-best-practices.md" },
+    { "Python Best Practices" = "guides/python-best-practices.md" },
+    { "uv and pyproject.toml Best Practices" = "guides/uv-pyproject-best-practices.md" },
     { "Dependabot Best Practices" = "guides/dependabot-best-practices.md" },
     { "Dependabot Auto-Approval" = "guides/dependabot-auto-approval.md" },
   ] },
