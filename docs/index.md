@@ -25,7 +25,7 @@
               <strong>Foundry</strong>
             </span>
             <p>A GitOps-driven infrastructure-as-code framework for managing GitHub organizations, repositories, rulesets, environments, and security policies at scale.</p>
-            <span class="status">Planned</span>
+            <span class="status">In testing</span>
           </li>
           <li>
             <span class="soon-project">
