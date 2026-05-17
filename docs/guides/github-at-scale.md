@@ -1,19 +1,19 @@
 # GitHub at Scale
 
-A few repositories are easy to manage by hand, but once you delve into more and more repository 
-setup it becomes a pain and keeping things up-to-date is also a time sink.
+A few repositories are easy to manage by hand. As the count grows, setup and
+maintenance start to take time.
 
-A few easy examples are one repository has the right branch protection. Another has an older CI
+One repository has the right branch protection. Another has an older CI
 workflow. Another is missing `SECURITY.md`. Labels mean different things from
 repo to repo. New projects start from whatever the last team copied.
 
 This guide is about keeping those things consistent without making every
-repository identical, unless you want that. Start with shared defaults, use templates where they help,
+repository identical. Start with shared defaults, use templates where they help,
 and keep exceptions intentional.
 
 ## Start With Organization Standards
 
-Before adding more automation, figure otu and write down the defaults the organization expects
+Before adding more automation, write down the defaults the organization expects
 new repositories to follow.
 
 Let's start with the basics:
