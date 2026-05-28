@@ -3,7 +3,7 @@
     <div class="landing-wrap">
       <section class="landing-hero" aria-labelledby="site-title">
         <h1 id="site-title">Ops Foundry</h1>
-        <p class="tagline">this just beginning.</p>
+        <p class="tagline">this is just the beginning.</p>
       </section>
 
       <section class="coming-soon" aria-labelledby="coming-soon-title">
