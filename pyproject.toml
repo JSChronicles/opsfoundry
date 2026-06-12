@@ -5,7 +5,7 @@ description = "Documentation site for opsfoundry.dev."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-  "zensical>=0.0.43",
+  "zensical>=0.0.44",
 ]
 
 [tool.uv]
