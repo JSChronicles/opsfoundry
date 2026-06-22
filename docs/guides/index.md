@@ -2,15 +2,18 @@
 
 Practical guides, templates, and engineering notes collected as the documentation hub grows.
 
+## Cloud Providers
+
+- [AWS](aws/)
+
+## Development Platforms
+
+- [GitHub](github/)
+
 ## Dependabot
 
 - [Dependabot Best Practices](dependabot-best-practices.md)
 - [Dependabot Auto-Approval Setup](dependabot-auto-approval.md)
-
-## GitHub
-
-- [GitHub Best Practices](github-best-practices.md)
-- [AWS OIDC for GitHub Actions](aws-oidc-github-actions.md)
 
 ## Python
 
