@@ -30,7 +30,7 @@ validation, and CI outside of the main Anvil repository.
 
 If you do not need the full Anvil framework and only want a small starting point
 for AWS Organization tasks, see the
-[standalone multi-account script template](https://github.com/JSChronicles/anvil/blob/main/templates/multi_aws_account_task_template.py).
+[standalone multi-account script template](templates/aws_multi_account_template.py).
 
 The template provides:
 
