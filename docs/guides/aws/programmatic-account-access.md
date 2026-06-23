@@ -11,10 +11,10 @@ These patterns are useful for Anvil account inventory and task execution, and th
 
 Use separate roles for separate governance jobs:
 
-| Pattern | Primary role | Typical permissions | Use when |
+| Pattern | Primary IAM role | Typical permissions | Use when |
 | --- | --- | --- | --- |
 | Organization access | `OrganizationAccountAccessRole` | `AdministratorAccess` | The management account, or automation running from a trusted management-account role, needs full administrative access to member accounts. |
-| Delegated security access | `SecurityAccessRole` | `SecurityAudit` in target accounts | A delegated administrator account needs read-only security visibility across the organization without using the management account for day-to-day access. |
+| Delegated security access | `SecurityAccessRole` | `SecurityAudit` | A delegated administrator account needs read-only security visibility across the organization without using the management account for day-to-day access. |
 
 Keep the management account path narrow. Use `OrganizationAccountAccessRole` for bootstrapping and account administration, and prefer delegated administrator accounts for recurring security, audit, and reporting workflows.
 
@@ -43,7 +43,7 @@ Use this for:
 - Standardizing the role definition across member accounts.
 - Making account access predictable for Anvil or other inventory and execution tooling.
 
-Do not deploy this StackSet to the management account. It is designed for member accounts because it grants the management account authority to assume into the target account.
+Do not deploy `member-account-org-role-stackset.yaml` to the management account. It is designed for member accounts because it grants the management account authority to assume into the target account.
 
 ### Management Account Stack
 

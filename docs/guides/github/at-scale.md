@@ -319,8 +319,8 @@ Useful defaults include:
 The goal is not to merge every update automatically. It is to keep
 dependency work regular and owned by someone or a group.
 
-For more detail, see [Dependabot Best Practices](../dependabot-best-practices.md)
-and [Dependabot Auto-Approval](../dependabot-auto-approval.md).
+For more detail, see [Dependabot Best Practices](dependabot-best-practices.md)
+and [Dependabot Auto-Approval](dependabot-auto-approval.md).
 
 The standard Dependabot auto-approval workflows can handle repositories with multiple ecosystems. Use the filtered Dependabot auto-update workflow when the organization wants an additional policy layer, such as allowing only selected ecosystems, patch and minor updates, or dependency names that match approved prefixes. Pair that with grouped `dependabot.yml` entries per ecosystem so automation stays predictable while still reducing dependency maintenance noise.
 

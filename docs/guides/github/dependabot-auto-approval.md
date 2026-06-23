@@ -1,6 +1,6 @@
 # Dependabot Auto-Approval Setup
 
-This guide covers two ways to auto-approve Dependabot pull requests for patch and minor version updates.
+This guide covers three patterns for auto-approving Dependabot pull requests for patch and minor version updates.
 
 Use the single-contributor setup when you fully control the repository and workflow files. Use the multi-contributor setup when other people may contribute to the repository, or when you want a tighter permission boundary around automated approvals.
 
@@ -9,19 +9,22 @@ Use the filtered auto-update setup when a repository needs more control over whi
 ## High-Level Overview
 
 For the single-contributor setup:
+
 - Enable Allow auto-merge
 - Enable Allow GitHub Actions to create and approve pull requests
 - Add the workflow
 
 
 For the multi-contributor GitHub App setup:
+
 - Install the GitHub App on the repository
 - Enable Allow auto-merge
 - Grant the Dependabot secrets to the repository
 - Add the workflow
 
 For the filtered auto-update setup:
-- Follow the setup as needed to match single-contributor or multi-contributor
+
+- Choose the token model that matches the repository: `GITHUB_TOKEN` for single-contributor repositories or a GitHub App token for tighter approval boundaries.
 - Decide which update types are allowed, such as patch and minor updates.
 - Decide whether to include or exclude dependency name prefixes.
 - Add the workflow
@@ -37,13 +40,17 @@ This setup uses the built-in `GITHUB_TOKEN`. It is the simplest option and does 
 
 In the repository, enable auto-merge:
 
-1. Open the repository. > Settings > General > Find Pull Requests
-  1.  Check Allow auto-merge
+1. Open the repository.
+1. Go to **Settings** > **General**.
+1. Find **Pull Requests**.
+1. Check **Allow auto-merge**.
 
 Then allow GitHub Actions to approve pull requests:
 
-1. Open the repository > Settings > Actions > General > Workflow permissions
-  1. Check Allow GitHub Actions to create and approve pull requests.
+1. Open the repository.
+1. Go to **Settings** > **Actions** > **General**.
+1. Find **Workflow permissions**.
+1. Check **Allow GitHub Actions to create and approve pull requests**.
 
 ### Workflow
 
@@ -93,7 +100,7 @@ jobs:
 ```
 
 
-## Personal Repository, Multiple Contributors
+## Repository With Multiple Contributors
 
 Use this setup when other contributors may be involved, or when you want automated PR approval handled by a dedicated permission-scoped identity.
 
@@ -132,8 +139,10 @@ Install the app on either all repositories or selected repositories.
 
 For each repository using the app, enable auto-merge:
 
-1. Open the repository. > Settings > General > Find Pull Requests
-  1.  Check Allow auto-merge
+1. Open the repository.
+1. Go to **Settings** > **General**.
+1. Find **Pull Requests**.
+1. Check **Allow auto-merge**.
 
 
 ### Dependabot Secrets
@@ -141,10 +150,9 @@ For each repository using the app, enable auto-merge:
 Add these Dependabot secrets at the repository level or organization level:
 
 1. Open the repository or organization settings.
-1. Go to **Secrets and variables**.
-  1. Go to **Dependabot**.
-    1. Select **New repository secret** or **New organization secret**.
-      1. Add `DEPENDABOT_APP_CLIENT_ID` and `DEPENDABOT_APP_PRIVATE_KEY`.
+1. Go to **Secrets and variables** > **Dependabot**.
+1. Select **New repository secret** or **New organization secret**.
+1. Add `DEPENDABOT_APP_CLIENT_ID` and `DEPENDABOT_APP_PRIVATE_KEY`.
 
 Use the GitHub App client ID and the full private key contents.
 
@@ -217,7 +225,7 @@ jobs:
 
 Use this workflow when auto-approval should be limited by update type and dependency name. It is useful for repositories that want broad Dependabot coverage but only want low-risk ecosystems or dependency groups to be auto-approved and auto-merged.
 
-The default example allows only patch and minor updates. `INCLUDED_PREFIXES_JSON` and `EXCLUDED_PREFIXES_JSON` can be used to allow or block dependency names by prefix.
+The default example uses `GITHUB_TOKEN` and allows only patch and minor updates. `INCLUDED_PREFIXES_JSON` and `EXCLUDED_PREFIXES_JSON` can be used to allow or block dependency names by prefix. For multi-contributor repositories, use the same eligibility check but replace the approval and merge token with a GitHub App token, as shown in the GitHub App workflow above.
 
 ```yaml
 name: Dependabot auto-update
@@ -294,12 +302,16 @@ Keep the workflow protected with CODEOWNERS and branch protection or rulesets. A
 
 Add the auto-approval workflow path to the CODEOWNERS file, with the repository admin, maintainer, or trusted maintainer team as owner. Pair this with branch protection or rulesets that require code owner review for workflow changes.
 
-This keeps contributors from changing the workflow that can mint the GitHub App token and approve Dependabot pull requests.
+This keeps contributors from changing the workflow that can approve and auto-merge Dependabot pull requests.
 
 ```yaml
-# Protect the workflow that can approve Dependabot PRs with the GitHub App token.
+# Protect the filtered workflow that can approve and auto-merge Dependabot PRs.
+/.github/workflows/dependabot-auto-update.yaml @username
+
+# Protect the GitHub App workflow if you use the multi-contributor setup.
 /.github/workflows/dependabot-auto-approve.yaml @username
 
-# or a team setup
+# or use a team owner
+/.github/workflows/dependabot-auto-update.yaml @your-org/repo-admins
 /.github/workflows/dependabot-auto-approve.yaml @your-org/repo-admins
 ```

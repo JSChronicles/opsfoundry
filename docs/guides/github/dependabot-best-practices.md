@@ -48,7 +48,7 @@ schedule:
   timezone: "America/Chicago"
 ```
 
-Use `cooldown.default-days` to delay routine version update pull requests. A 7 day cooldown gives maintainers and upstream projects time to catch broken releases, bad tags, or fast follow-up patches before Dependabot opens a pull request. 14 days is even better but yo don't gain much past that.
+Use `cooldown.default-days` to delay routine version update pull requests. A 7 day cooldown gives maintainers and upstream projects time to catch broken releases, bad tags, or fast follow-up patches before Dependabot opens a pull request. 14 days is more conservative, but the practical benefit usually tapers off after that.
 
 ```yaml
 cooldown:
@@ -125,9 +125,9 @@ Use `directory` when one path owns the ecosystem. Use `directories` when the rep
 - package-ecosystem: "terraform"
   directories:
     - "/terraform"
-    - "/terraform/thing1"
-    - "/terraform/thing2"
-    - "/terraform/thing3"
+    - "/terraform/network"
+    - "/terraform/security"
+    - "/terraform/observability"
   schedule:
     interval: "monthly"
   cooldown:
@@ -167,7 +167,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      time: "08:00"
+      time: "08:30"
       timezone: "America/Chicago"
     cooldown:
       default-days: 7
@@ -186,7 +186,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      time: "08:00"
+      time: "09:00"
       timezone: "America/Chicago"
     cooldown:
       default-days: 7
@@ -208,4 +208,4 @@ If the repository also uses [Dependabot Auto-Approval Setup](dependabot-auto-app
 
 Do not auto-approve major updates by default. Major updates should stay visible for manual review because they are more likely to include breaking changes, migration work, or policy decisions.
 
-The [single-contributor](dependabot-auto-approval.md#personal-repository-single-contributor) and [GitHub App](dependabot-auto-approval.md#personal-repository-multiple-contributors) auto-approval workflows also work with repositories that have multiple Dependabot ecosystems. Use the [filtered auto-update workflow](dependabot-auto-approval.md#filtered-auto-update-workflow) only when specific ecosystems, update types, or dependency name prefixes should be eligible for automatic approval and auto-merge.
+The [single-contributor](dependabot-auto-approval.md#personal-repository-single-contributor) and [GitHub App](dependabot-auto-approval.md#repository-with-multiple-contributors) auto-approval workflows also work with repositories that have multiple Dependabot ecosystems. Use the [filtered auto-update workflow](dependabot-auto-approval.md#filtered-auto-update-workflow) only when specific ecosystems, update types, or dependency name prefixes should be eligible for automatic approval and auto-merge.

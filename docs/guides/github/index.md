@@ -8,3 +8,5 @@ Use this section for GitHub-specific practices such as repository standards, sca
 
 - [Best Practices](best-practices.md)
 - [GitHub at Scale](at-scale.md)
+- [Dependabot Best Practices](dependabot-best-practices.md)
+- [Dependabot Auto-Approval Setup](dependabot-auto-approval.md)

@@ -173,7 +173,7 @@ Anvil includes a task validation mode that checks discovered tasks for
 structural correctness without executing them:
 
 ```console
-anvil tasks validate
+anvil validate --tasks
 ```
 
 Validation verifies that:
