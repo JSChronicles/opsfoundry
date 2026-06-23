@@ -72,6 +72,29 @@ after validation.
 Region selection may include explicit regions as well as broader selections such
 as `all` or glob-like patterns, depending on the configuration.
 
+Example explicit region selection:
+
+```yaml
+targets:
+  - name: prod
+    type: organization
+    profile: prod-admin
+    regions:
+      - us-east-1
+      - us-west-2
+```
+
+Example broad region selection:
+
+```yaml
+targets:
+  - name: prod
+    type: organization
+    profile: prod-admin
+    regions:
+      - us-*
+```
+
 ## Account Filters
 
 Organization targets can narrow discovered accounts through include/exclude
@@ -80,6 +103,29 @@ filters.
 If an include or exclude list references unknown account IDs, Anvil warns but
 continues with valid discovered accounts that remain. This helps catch stale
 configuration without turning harmless selection drift into a hard failure.
+
+Example include filter:
+
+```yaml
+targets:
+  - name: prod
+    type: organization
+    profile: prod-admin
+    include:
+      - "111111111111"
+      - "222222222222"
+```
+
+Example exclude filter:
+
+```yaml
+targets:
+  - name: prod
+    type: organization
+    profile: prod-admin
+    exclude:
+      - "999999999999"
+```
 
 ## Dry Run
 

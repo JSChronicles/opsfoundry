@@ -48,11 +48,38 @@ schedule:
   timezone: "America/Chicago"
 ```
 
-Use `cooldown.default-days` to delay routine version update pull requests. A 7 day cooldown gives maintainers and upstream projects time to catch broken releases, bad tags, or fast follow-up patches before Dependabot opens a pull request. 14 days is even better but yo don't gain much past that.
+Use `cooldown.default-days` to delay routine version update pull requests. A 7 day cooldown gives maintainers and upstream projects time to catch broken releases, bad tags, or fast follow-up patches before Dependabot opens a pull request. 14 days is more conservative, but the practical benefit usually tapers off after that.
 
 ```yaml
 cooldown:
   default-days: 7
+```
+
+When a repository tracks multiple ecosystems, offset the scheduled times for each ecosystem instead of starting them all at the same minute. This reduces branch churn, out-of-date pull requests, and race conditions when Dependabot opens several updates against the same base branch.
+
+For example:
+
+```yaml
+- package-ecosystem: "uv"
+  directory: "/"
+  schedule:
+    interval: "monthly"
+    time: "08:00"
+    timezone: "America/Chicago"
+
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "monthly"
+    time: "08:30"
+    timezone: "America/Chicago"
+
+- package-ecosystem: "pre-commit"
+  directory: "/"
+  schedule:
+    interval: "monthly"
+    time: "09:00"
+    timezone: "America/Chicago"
 ```
 
 ## Grouping
@@ -68,6 +95,46 @@ groups:
 ```
 
 Keep the group scoped to one ecosystem. A single pull request that updates Python packages, workflow actions, and pre-commit hooks is harder to review and harder to roll back.
+
+For Terraform and OpenTofu repositories, keep the same grouping pattern per ecosystem:
+
+```yaml
+- package-ecosystem: "terraform"
+  directory: "/terraform"
+  schedule:
+    interval: "monthly"
+    time: "08:00"
+    timezone: "America/Chicago"
+  cooldown:
+    default-days: 7
+  groups:
+    terraform:
+      applies-to: version-updates
+      patterns:
+        - "*"
+  commit-message:
+    prefix: "chore(terraform)"
+  labels:
+    - "dependencies"
+    - "terraform"
+```
+
+Use `directory` when one path owns the ecosystem. Use `directories` when the repository has multiple Terraform module paths and Dependabot should check each of them explicitly:
+
+```yaml
+- package-ecosystem: "terraform"
+  directories:
+    - "/terraform"
+    - "/terraform/network"
+    - "/terraform/security"
+    - "/terraform/observability"
+  schedule:
+    interval: "monthly"
+  cooldown:
+    default-days: 7
+```
+
+This keeps routine Terraform updates grouped while still making it clear which module paths are part of Dependabot coverage.
 
 ## Example Configuration
 
@@ -100,7 +167,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      time: "08:00"
+      time: "08:30"
       timezone: "America/Chicago"
     cooldown:
       default-days: 7
@@ -119,7 +186,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      time: "08:00"
+      time: "09:00"
       timezone: "America/Chicago"
     cooldown:
       default-days: 7
@@ -140,3 +207,5 @@ updates:
 If the repository also uses [Dependabot Auto-Approval Setup](dependabot-auto-approval.md), keep auto-approval limited to patch and minor version updates.
 
 Do not auto-approve major updates by default. Major updates should stay visible for manual review because they are more likely to include breaking changes, migration work, or policy decisions.
+
+The [single-contributor](dependabot-auto-approval.md#personal-repository-single-contributor) and [GitHub App](dependabot-auto-approval.md#repository-with-multiple-contributors) auto-approval workflows also work with repositories that have multiple Dependabot ecosystems. Use the [filtered auto-update workflow](dependabot-auto-approval.md#filtered-auto-update-workflow) only when specific ecosystems, update types, or dependency name prefixes should be eligible for automatic approval and auto-merge.
