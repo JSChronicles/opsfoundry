@@ -3,16 +3,16 @@
 Anvil exposes these primary command groups:
 
 ```console
-anvil auth ...
 anvil graph ...
+anvil list ...
 anvil results ...
-anvil tasks ...
 anvil run ...
+anvil validate ...
 ```
 
 ## Logging Verbosity
 
-The `run`, `auth check`, and `graph` commands support `--log-level` to control
+The `run`, `validate`, and `graph` commands support `--log-level` to control
 console output verbosity.
 
 Supported values:
@@ -27,7 +27,7 @@ Examples:
 
 ```console
 anvil run --config-file ./yaml/orgs.yaml --log-level ERROR
-anvil auth check --config-file ./yaml/orgs.yaml --log-level WARNING
+anvil validate --auth --config-file ./yaml/orgs.yaml --log-level WARNING
 anvil graph --config-file ./yaml/orgs.yaml --log-level INFO
 ```
 
@@ -37,19 +37,19 @@ Authentication checks validate AWS credentials and access without executing
 tasks.
 
 ```console
-anvil auth check --help
+anvil validate --help
 ```
 
 Authenticate credentials from an organization file:
 
 ```console
-anvil auth check --config-file ./yaml/orgs.yaml
+anvil validate --auth --config-file ./yaml/orgs.yaml
 ```
 
 Suppress output and rely on the exit code, which is useful for CI:
 
 ```console
-anvil auth check --config-file orgs.yaml --quiet
+anvil validate --tasks --processors --auth --config-file orgs.yaml --quiet
 ```
 
 ### What Auth Check Does
@@ -62,8 +62,15 @@ For each configured organization, Anvil:
 4. Records a structured result with status, source, timing, message, and
    optional remediation guidance.
 
-`auth check` is a lightweight preflight validation step, not a full execution
-run.
+`validate --auth` is a lightweight preflight validation step, not a full
+execution run.
+
+Authentication checks run concurrently across configured targets through a small
+bounded worker pool. Within one run, Anvil reuses auth-check outcomes for
+targets that use the same profile and inferred authentication source. The first
+target performs the STS identity check, while concurrent or later targets with
+the same auth identity reuse that outcome. Each target still receives its own
+auth result.
 
 ### Supported Authentication Sources
 
@@ -139,7 +146,7 @@ Example JSON output:
 List all available stock and user-defined tasks:
 
 ```console
-anvil tasks list
+anvil list --tasks
 ```
 
 Example output:
@@ -163,7 +170,7 @@ stock:
 Validate discovered tasks:
 
 ```console
-anvil tasks validate
+anvil validate --tasks
 ```
 
 Example validation failure:
@@ -178,6 +185,12 @@ Example validation success:
 
 ```console
 [OK] all tasks are valid
+```
+
+Validate selected tasks by name:
+
+```console
+anvil validate --tasks count_vpc noop
 ```
 
 See [Task Contract](task-contract.md) for discovery and validation details.
@@ -228,6 +241,60 @@ Use `--benchmark` only for performance investigations. It adds engine, target,
 account, region, and result-write timing details that can dramatically increase
 output size on large account, region, or task runs.
 
+## Processors
+
+Processors turn completed Anvil results into reports or integration artifacts.
+They are separate from tasks: tasks run against account-region sessions, while
+processors run after target execution or against an existing results directory.
+
+List available stock and user-defined processors:
+
+```console
+anvil list --processors
+```
+
+Validate all discovered processors without running them:
+
+```console
+anvil validate --processors
+```
+
+Validate selected processors by name:
+
+```console
+anvil validate --processors html_report sarif_report
+```
+
+Run a processor against a completed results directory:
+
+```console
+anvil results --results-dir ./results/orgs/2026-05-01T183012Z --processor html_report --output report.html
+```
+
+`--results-dir` must point at a run directory that contains `summary.json` and
+the target result files under `organizations/` or `account-groups/`. Processor
+outputs are resolved under the run's `reports/` directory, so the command above
+writes `./results/orgs/2026-05-01T183012Z/reports/report.html`.
+
+Attach processors to a target with `post_run` when the report should be produced
+automatically after `anvil run`:
+
+```yaml
+post_run:
+  - processor: html_report
+    output: status.html
+    run_on_failure: true
+```
+
+By default, target `post_run` processors run only after successful targets. Set
+`run_on_failure: true` for processors that are designed to handle failed target
+results. Target-level processor output is also written under `reports/` and is
+prefixed with the target name to avoid collisions across multiple targets.
+
+Use `html_report` for a self-contained human-readable report. Use `sarif_report`
+when tasks return `sarif_findings` and the result should be exported as SARIF
+2.1.0 for security or code-scanning tools.
+
 ## Results
 
 Runs write full JSON result files and flattened JSONL records for quick
@@ -248,6 +315,14 @@ anvil results --target prod --status failed
 
 # Show failed account records only.
 anvil results --type account --status failed
+
+# Filter records for one account by AWS account ID or friendly account name.
+anvil results --account 111111111111
+anvil results --account dev
+
+# Combine account filtering with other result filters.
+anvil results --account dev --status failed
+anvil results --account 111111111111 --type task --task count_vpcs
 
 # Show task records for one task name.
 anvil results --type task --task count_vpcs
@@ -277,6 +352,12 @@ anvil results --type task --target prod --task count_vpcs --fields account_id,re
 # Show failure rows with target, account, region, task, and error context.
 anvil results --status failed --fields record_type,target,account_id,region,task,error
 ```
+
+The result query command supports `--type`, `--target`, `--account`,
+`--region`, `--task`, `--status`, `--fields`, `--limit`, `--results-file` with
+one or more JSONL paths, and `--json` or `--jsonl` for structured filtered
+output. `--status failed` matches any non-success status. Without
+`--results-file`, Anvil queries every `results.jsonl` file under `./results`.
 
 ## Rerun Failures
 

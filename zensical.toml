@@ -15,13 +15,20 @@ nav = [
   ] },
   { "Guides and notes" = [
     { "Overview" = "guides/index.md" },
-    { "AWS OIDC for GitHub Actions" = "guides/aws-oidc-github-actions.md" },
-    { "GitHub Best Practices" = "guides/github-best-practices.md" },
-    { "GitHub at Scale" = "guides/github-at-scale.md" },
-    { "Python Best Practices" = "guides/python-best-practices.md" },
+    { "AWS" = [
+      { "Overview" = "guides/aws/index.md" },
+      { "Programmatic Account Access" = "guides/aws/programmatic-account-access.md" },
+      { "CloudFormation Templates" = "guides/aws/cloudformation/index.md" },
+      { "OIDC for GitHub Actions" = "guides/aws/oidc-github-actions.md" },
+    ] },
+    { "GitHub" = [
+      { "Overview" = "guides/github/index.md" },
+      { "Best Practices" = "guides/github/best-practices.md" },
+      { "GitHub at Scale" = "guides/github/at-scale.md" },
+      { "Dependabot Best Practices" = "guides/github/dependabot-best-practices.md" },
+      { "Dependabot Auto-Approval" = "guides/github/dependabot-auto-approval.md" },
+    ] },
     { "uv and pyproject.toml Best Practices" = "guides/uv-pyproject-best-practices.md" },
-    { "Dependabot Best Practices" = "guides/dependabot-best-practices.md" },
-    { "Dependabot Auto-Approval" = "guides/dependabot-auto-approval.md" },
   ] },
 ]
 

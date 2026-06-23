@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates SecurityAccessRole target role in payer/member accounts
+
+Parameters:
+  DelegatedAdminAccountId:
+    Type: String
+    Description: AWS Account ID of the delegated admin account
+    AllowedPattern: '^\d{12}$'
+
+  RoleName:
+    Type: String
+    Default: SecurityAccessRole
+
+Resources:
+  SecurityAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: Security target role assumable from delegated admin account
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/SecurityAudit
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowDelegatedAdminSecurityRole
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${DelegatedAdminAccountId}:root
+            Action: sts:AssumeRole
+      MaxSessionDuration: 3600
+
+Outputs:
+  RoleArn:
+    Description: ARN of the SecurityAccessRole
+    Value: !GetAtt SecurityAccessRole.Arn

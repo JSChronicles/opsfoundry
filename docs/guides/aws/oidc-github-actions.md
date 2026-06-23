@@ -141,4 +141,4 @@ Before using the role in production:
 - Confirm the role does not allow broader AWS access than the workflow needs.
 - Confirm Terraform state access is limited to the expected bucket and prefix.
 - Confirm cross-account assume-role permissions only include approved roles.
-- Keep workflow names, branches, and pull requests consistent with the local [GitHub best practices](github-best-practices.md).
+- Keep workflow names, branches, and pull requests consistent with the local [GitHub best practices](../github/best-practices.md).

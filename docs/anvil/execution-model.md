@@ -291,6 +291,42 @@ distinct call shape.
 Client caching reduces repeated boto3 client construction, service model setup,
 endpoint setup, and connection pool churn. It does not reduce AWS API calls.
 
+## Cache and Reuse Boundaries
+
+Anvil uses narrowly scoped caches to avoid repeating expensive discovery,
+schema, loader, and boto3 setup work. These caches are intentionally bounded so
+account, region, and run boundaries stay clear.
+
+### Loader and Validation Caches
+
+Task and processor callables are cached in-process after Anvil resolves stock
+or plugin entry points. Task graph resolution is also cached for repeated
+identical task specs, but callers receive fresh resolved execution objects so
+shared cached state cannot be mutated by a run.
+
+Packaged JSON Schema files and the schema registry are cached in-process
+because they do not change during a running command. A new process starts with
+empty loader and schema caches.
+
+### Run-Scoped AWS Caches
+
+Authentication checks are cached per run by profile and inferred
+authentication source. If multiple targets use the same AWS identity, the first
+target performs the STS identity check and later or concurrent targets reuse
+that outcome. Each target still receives its own auth result.
+
+Organization discovery is cached per run by AWS Organization ID. Targets that
+resolve to the same organization reuse the discovered management account ID,
+active account map, and region statuses.
+
+Single-flight coordination prevents concurrent preparation workers from
+running the same authentication check or organization discovery at the same
+time. If the first discovery fails, waiters receive that error and the cache can
+be retried.
+
+Run-scoped AWS caches are not persisted to disk and do not carry discovery data
+into a later Anvil command.
+
 ## Result Model
 
 Anvil records structured results at four layers:
