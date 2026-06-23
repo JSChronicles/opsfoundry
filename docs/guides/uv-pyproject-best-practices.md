@@ -108,7 +108,7 @@ When starting a new project, choose dependency versions that are already compati
 
 Keep tool configuration in `pyproject.toml` when the tool supports it. This keeps linting, formatting, testing, and packaging behavior visible in one place.
 
-For code-level conventions such as type hints, docstrings, logging, CLIs, data modeling, concurrency, and caching, use [Python Best Practices](python-best-practices.md).
+Keep code-level conventions such as type hints, docstrings, logging, CLIs, data modeling, concurrency, and caching documented separately from project configuration.
 
 Example Ruff configuration:
 
@@ -143,7 +143,7 @@ Use the same commands in CI where practical. This reduces drift between local de
 
 When using Dependabot with `uv`, keep the dependency update pattern consistent with the repository's automation.
 
-Use the local [Dependabot Best Practices](dependabot-best-practices.md) guide for schedules, grouping, labels, and commit message conventions.
+Use the local [Dependabot Best Practices](github/dependabot-best-practices.md) guide for schedules, grouping, labels, and commit message conventions.
 
 ## Review Checklist
 

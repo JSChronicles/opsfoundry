@@ -115,7 +115,7 @@ A good template should include:
 - Dependabot configuration when dependencies are present.
 - CODEOWNERS when review ownership matters.
 
-For dependency automation conventions, use [Dependabot Best Practices](../dependabot-best-practices.md).
+For dependency automation conventions, use [Dependabot Best Practices](dependabot-best-practices.md).
 
 ## Miscellaneous Repositories
 

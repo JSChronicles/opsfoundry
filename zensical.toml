@@ -25,11 +25,10 @@ nav = [
       { "Overview" = "guides/github/index.md" },
       { "Best Practices" = "guides/github/best-practices.md" },
       { "GitHub at Scale" = "guides/github/at-scale.md" },
+      { "Dependabot Best Practices" = "guides/github/dependabot-best-practices.md" },
+      { "Dependabot Auto-Approval" = "guides/github/dependabot-auto-approval.md" },
     ] },
-    { "Python Best Practices" = "guides/python-best-practices.md" },
     { "uv and pyproject.toml Best Practices" = "guides/uv-pyproject-best-practices.md" },
-    { "Dependabot Best Practices" = "guides/dependabot-best-practices.md" },
-    { "Dependabot Auto-Approval" = "guides/dependabot-auto-approval.md" },
   ] },
 ]
 
