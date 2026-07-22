@@ -74,59 +74,107 @@ Do not use the import template to create a new role. Use the normal management a
 
 ## Delegated Admin Security Access
 
-Delegated administrator access should use a separate role from the full administrative organization access role. The provided templates define a `SecurityAccessRole` pattern where a delegated admin account can assume read-only security roles in payer and member accounts.
+Delegated administrator access should use a separate role from the full administrative organization access role. The provided template defines a `SecurityAccessRole` pattern where an SSO principal in the delegated security account can assume read-only security roles in payer and member accounts.
 
-Use these templates for delegated admin security access:
+Use this template for delegated admin security access:
 
 | Template | Deploy from | Deploy to | Purpose |
 | --- | --- | --- | --- |
-| [`delegated-admin-account-SecurityAccessRole-stack.yml`](cloudformation/aws_delegated_admin_access/delegated-admin-account-SecurityAccessRole-stack.yml) | Delegated admin account | Delegated admin account only | Creates the source role that can assume `SecurityAccessRole` in other accounts. |
-| [`member-account-SecurityAccessRole.yml`](cloudformation/aws_delegated_admin_access/member-account-SecurityAccessRole.yml) | Management account or delegated deployment pipeline | Payer and member accounts | Creates the target role with `SecurityAudit` permissions and trusts the delegated admin account. |
-
-### Delegated Admin Account Role
-
-Deploy [`delegated-admin-account-SecurityAccessRole-stack.yml`](cloudformation/aws_delegated_admin_access/delegated-admin-account-SecurityAccessRole-stack.yml) in the delegated administrator account.
-
-This role is the source role for security automation. It trusts principals in the delegated admin account and grants permission to assume `SecurityAccessRole` in other accounts.
-
-Use this role for workflows that run from the delegated admin account, such as security inventory, audit collection, compliance checks, or Anvil tasks that should not require management-account credentials.
+| [`member-account-SecurityAccessRole.yml`](cloudformation/aws_delegated_admin_access/member-account-SecurityAccessRole.yml) | Management account | Payer and member accounts | Creates the target role with `SecurityAudit` permissions and trusts the delegated security account or its selected IAM Identity Center permission set. |
 
 ### Caller Permissions
 
-The target account trust policy is only one side of delegated access. The principal that starts the session also needs permission to call `sts:AssumeRole` against the target `SecurityAccessRole`.
+The target account trust policy is only one side of delegated access. The IAM Identity Center permission set used in the delegated security account also needs permission to call `sts:AssumeRole` against the target `SecurityAccessRole`.
 
-Add an allow statement like this to the role, permission set, or automation identity that users or workflows authenticate through:
+For Anvil organization mode, the permission set also needs permission to discover organization accounts and enabled Regions. Add a policy like this to the permission set used by people or automation running Anvil:
 
 ```json
 {
-  "Sid": "AllowAssumeSecurityAccessRole",
-  "Effect": "Allow",
-  "Action": "sts:AssumeRole",
-  "Resource": "arn:aws:iam::*:role/SecurityAccessRole"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DiscoverOrganizationAccounts",
+      "Effect": "Allow",
+      "Action": [
+        "organizations:DescribeOrganization",
+        "organizations:ListAccounts"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ListAccountRegions",
+      "Effect": "Allow",
+      "Action": "account:ListRegions",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowAssumeSecurityAccessRole",
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::*:role/SecurityAccessRole"
+    }
+  ]
 }
 ```
+
+The account must also be registered as a delegated administrator for the AWS services whose organization data it needs to access.
 
 Common places to add this example permission include:
 
 - AWS IAM Identity Center permission sets used by security or platform teams.
 - IAM roles used by CI/CD, Anvil, inventory collectors, or reporting jobs.
-- Delegated admin account roles that broker access into member accounts.
 
 Keep the resource scope aligned to the approved target role name. If you create different delegated roles for different teams, scope each caller policy to only the role names that group should assume.
 
-### Member and Payer Target Role
 
-Deploy [`member-account-SecurityAccessRole.yml`](cloudformation/aws_delegated_admin_access/member-account-SecurityAccessRole.yml) to each target account that the delegated admin account must inspect. This includes member accounts and, when required, the payer or management account.
+### Console Deployment Steps
 
-The template creates the target `SecurityAccessRole`, attaches AWS managed `SecurityAudit`, and configures trust for the delegated admin account.
+Use this sequence to configure the delegated security account and roll out the target role across the organization. Anvil uses the SSO session directly when processing the delegated security account. It assumes `SecurityAccessRole` only in other selected accounts, including the management account.
 
-Use StackSets when applying this role broadly across organizational units. Use direct stack deployment for exceptional accounts that need separate rollout control.
+#### Prerequisites
+
+1. Confirm that the security account is registered as a delegated administrator for each AWS service used by the security workflow. I personally used cloudformation as the delegated service.
+1. Record the 12-digit AWS account ID of the delegated security account.
+1. Identify the IAM Identity Center permission set used to run Anvil in the delegated security account.
+1. Add the caller policy from the previous section to that permission set.
+1. Confirm that trusted access between AWS Organizations and CloudFormation StackSets is enabled when using service-managed StackSet permissions.
+
+#### Create the Payer Target Role
+
+1. Sign in to the AWS Organizations management account, which is sometimes called the payer account.
+1. Open CloudFormation in `us-east-1`.
+1. Create a regular stack from [`member-account-SecurityAccessRole.yml`](cloudformation/aws_delegated_admin_access/member-account-SecurityAccessRole.yml).
+1. Enter the delegated security account ID for `DelegatedAdminAccountId`.
+1. Enter the IAM Identity Center permission set name in `PermissionSetName` to restrict access to the intended SSO role.
+1. Review and create the stack, including the acknowledgement that the template creates IAM resources with a custom name.
+
+CloudFormation StackSets does not deploy stack instances to the management account, even when the root is selected. The regular stack in this section is therefore required when the security workflow needs access to the management account.
+
+#### Deploy to Member Accounts with StackSets
+
+1. While signed in to the management account, open AWS Organizations and copy the root ID. A root ID starts with `r-`.
+1. Open CloudFormation in `us-east-1`, then open StackSets.
+1. Create a StackSet from [`member-account-SecurityAccessRole.yml`](cloudformation/aws_delegated_admin_access/member-account-SecurityAccessRole.yml).
+1. Choose service-managed permissions, enter the delegated security account ID for `DelegatedAdminAccountId`, and enter the same IAM Identity Center permission set name in `PermissionSetName`.
+1. Choose **Deploy to organizational units (OUs)** and enter the root ID.
+1. Set the account filter type to **Difference** and enter the delegated security account ID. This deploys to member accounts beneath the root while excluding the delegated security account, where Anvil uses the base SSO session directly.
+1. Select `us-east-1` as the deployment Region.
+1. Choose conservative concurrency and failure-tolerance settings for the first deployment, then create the stack instances.
+1. Wait for the operation to finish and confirm that every intended account reports `CURRENT`.
+
+#### Verify Access
+
+1. Authenticate through the intended IAM Identity Center permission set in the delegated security account.
+1. Confirm that organization account discovery and Region discovery succeed.
+1. Assume `arn:aws:iam::<target-account-id>:role/SecurityAccessRole` in one test member account.
+1. Run `aws sts get-caller-identity` with the assumed credentials and confirm that the returned ARN names `SecurityAccessRole` in the target account.
+
 
 ## Operational Guidance
 
 - Prefer short role sessions unless a workflow has a documented reason to need longer access.
 - Keep role names consistent across accounts so automation can derive role ARNs from account IDs.
-- Use StackSets for broad member-account rollout and single-account stacks for management or delegated admin account roles.
+- Use StackSets for broad member-account rollout and a single-account stack for the management-account target role.
 - Run drift detection after importing existing roles or after manual IAM changes.
 - Avoid using the management account for recurring security collection when a delegated administrator account can do the work.
 - Scope upstream automation roles to `sts:AssumeRole` only for the approved target role names.
@@ -135,5 +183,6 @@ Use StackSets when applying this role broadly across organizational units. Use d
 ## Related AWS Documentation
 
 - [Accessing member accounts in an organization with AWS Organizations](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_access.html)
+- [CloudFormation StackSet deployment targets](https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DeploymentTargets.html)
 - [Import AWS resources into a CloudFormation stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/import-resources.html)
 - [Using AWS Organizations with other AWS services](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services.html)

@@ -10,5 +10,4 @@ These templates support the AWS programmatic account access patterns documented 
 
 ## Delegated Admin Security Access
 
-- [`delegated-admin-account-SecurityAccessRole-stack.yml`](aws_delegated_admin_access/delegated-admin-account-SecurityAccessRole-stack.yml)
 - [`member-account-SecurityAccessRole.yml`](aws_delegated_admin_access/member-account-SecurityAccessRole.yml)

@@ -7,9 +7,17 @@ Parameters:
     Description: AWS Account ID of the delegated admin account
     AllowedPattern: '^\d{12}$'
 
+  PermissionSetName:
+    Type: String
+    Description: Optional. Name of the IAM Identity Center permission set allowed to assume this role. Leave blank to allow any principal from the delegated admin account.
+    Default: ''
+
   RoleName:
     Type: String
     Default: SecurityAccessRole
+
+Conditions:
+  RestrictToPermissionSet: !Not [!Equals [!Ref PermissionSetName, '']]
 
 Resources:
   SecurityAccessRole:
@@ -27,6 +35,13 @@ Resources:
             Principal:
               AWS: !Sub arn:aws:iam::${DelegatedAdminAccountId}:root
             Action: sts:AssumeRole
+            Condition: !If
+              - RestrictToPermissionSet
+              - ArnLike:
+                  aws:PrincipalArn:
+                    - !Sub arn:aws:iam::${DelegatedAdminAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_${PermissionSetName}_*
+                    - !Sub arn:aws:iam::${DelegatedAdminAccountId}:role/aws-reserved/sso.amazonaws.com/*/AWSReservedSSO_${PermissionSetName}_*
+              - !Ref AWS::NoValue
       MaxSessionDuration: 3600
 
 Outputs:

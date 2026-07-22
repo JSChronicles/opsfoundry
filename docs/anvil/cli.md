@@ -1,219 +1,146 @@
 # CLI
 
-Anvil exposes these primary command groups:
+Anvil exposes four primary commands:
 
 ```console
-anvil graph ...
-anvil list ...
-anvil results ...
-anvil run ...
-anvil validate ...
+anvil run       # Execute schema v2 provider-target YAML
+anvil list      # List tasks, processors, and providers
+anvil validate  # Inspect the environment or run focused validation
+anvil results   # Query, process, or rerun completed results
 ```
 
-## Logging Verbosity
+The former `anvil graph` command was removed in v0.30. Task dependencies are
+still validated and resolved automatically by `validate` and `run`.
 
-The `run`, `validate`, and `graph` commands support `--log-level` to control
-console output verbosity.
+## Logging
 
-Supported values:
-
-- `DEBUG`
-- `INFO`
-- `WARNING`
-- `ERROR`
-- `CRITICAL`
-
-Examples:
+Every command supports `--log-level` with `DEBUG`, `INFO`, `WARNING`, `ERROR`,
+or `CRITICAL`.
 
 ```console
-anvil run --config-file ./yaml/orgs.yaml --log-level ERROR
-anvil validate --auth --config-file ./yaml/orgs.yaml --log-level WARNING
-anvil graph --config-file ./yaml/orgs.yaml --log-level INFO
+anvil run --config-file ./yaml/targets.yaml --log-level INFO
+anvil validate --auth --config-file ./yaml/targets.yaml --log-level WARNING
 ```
 
-## Authentication
+## List Components
 
-Authentication checks validate AWS credentials and access without executing
-tasks.
-
-```console
-anvil validate --help
-```
-
-Authenticate credentials from an organization file:
-
-```console
-anvil validate --auth --config-file ./yaml/orgs.yaml
-```
-
-Suppress output and rely on the exit code, which is useful for CI:
-
-```console
-anvil validate --tasks --processors --auth --config-file orgs.yaml --quiet
-```
-
-### What Auth Check Does
-
-For each configured organization, Anvil:
-
-1. Infers the likely authentication source.
-2. Creates a boto3 session.
-3. Calls AWS STS `GetCallerIdentity`.
-4. Records a structured result with status, source, timing, message, and
-   optional remediation guidance.
-
-`validate --auth` is a lightweight preflight validation step, not a full
-execution run.
-
-Authentication checks run concurrently across configured targets through a small
-bounded worker pool. Within one run, Anvil reuses auth-check outcomes for
-targets that use the same profile and inferred authentication source. The first
-target performs the STS identity check, while concurrent or later targets with
-the same auth identity reuse that outcome. Each target still receives its own
-auth result.
-
-### Supported Authentication Sources
-
-Anvil can classify authentication as:
-
-- `SSO`
-- `Profile static`
-- `Profile assume role`
-- `Environment`
-- `OIDC`
-- `Unknown`
-
-This classification improves failure reporting and remediation guidance.
-
-Common normalized failures include:
-
-- AWS profile not found
-- no AWS credentials available
-- AWS SSO session is invalid or expired
-- AWS credentials have expired
-- access denied when calling AWS
-- unexpected authentication error
-
-## Graph
-
-Display the resolved task dependency graph for an organization configuration:
-
-```console
-anvil graph --help
-anvil graph --config-file ./examples/07-optional-task-semantics.yaml
-```
-
-Output graph results as JSON:
-
-```console
-anvil graph --config-file ./examples/07-optional-task-semantics.yaml --json
-```
-
-Example graph output:
-
-```console
-Execution Graph (optional-semantics-org)
-----------------------------------------
-inventory
-`-- reporting
-    `-- cleanup
-```
-
-Example JSON output:
-
-```json
-{
-  "organization": "optional-semantics-org",
-  "tasks": [
-    {
-      "name": "inventory",
-      "depends_on": []
-    },
-    {
-      "name": "reporting",
-      "depends_on": ["inventory"]
-    },
-    {
-      "name": "cleanup",
-      "depends_on": ["reporting"]
-    }
-  ]
-}
-```
-
-## Task Management
-
-List all available stock and user-defined tasks:
+List installed component catalogs:
 
 ```console
 anvil list --tasks
+anvil list --processors
+anvil list --providers
 ```
 
-Example output:
+Task listings are grouped by universal and provider-specific packages. Extension
+package sources are shown alongside stock components, and ambiguous duplicate
+names are reported.
+
+Show generated detail documentation for exactly one task or processor:
 
 ```console
-Available tasks:
-plugin: my-test-project:
-  - hello
-  - test
-
-stock:
-  - compare_asg_to_cluster_instances
-  - get_aws_inline_policies
-  - get_organization_structure
-  - noop
-  - noop_fail
-  - remove_iam_user
-  - remove_missing_group_assignments
+anvil list --tasks count_vpc --detail
+anvil list --processors html_report --detail
 ```
 
-Validate discovered tasks:
+`--detail` is not supported with `--providers`.
+
+## Validate
+
+With no focused switches, `anvil validate` prints offline environment
+diagnostics: Python and Anvil versions, optional provider dependency
+availability, provider/task/processor discovery, local auth-source hints, and
+result-path state. It does not call provider APIs or run tasks.
+
+```console
+anvil validate
+```
+
+Validate one or more schema v2 configuration files offline:
+
+```console
+anvil validate --config-file ./yaml/targets.yaml
+anvil validate --config-file ./yaml/aws.yaml ./yaml/github.yaml
+```
+
+Offline configuration validation covers parsing, JSON Schema, semantic target
+rules, provider/task compatibility, task dependencies, processor references,
+and CLI selection overrides.
+
+Run focused component validation:
 
 ```console
 anvil validate --tasks
-```
-
-Example validation failure:
-
-```console
-[ERROR] task validation failed:
-  - task 'cleanup' is missing required run() parameters: ['account_alias']
-  - task 'inventory' is missing required run() parameters: ['metadata']
-```
-
-Example validation success:
-
-```console
-[OK] all tasks are valid
-```
-
-Validate selected tasks by name:
-
-```console
 anvil validate --tasks count_vpc noop
+anvil validate --processors html_report sarif_report
+anvil validate --providers
+anvil validate --providers aws github
 ```
 
-See [Task Contract](task-contract.md) for discovery and validation details.
+`--tasks` and `--processors` validate discovery, signatures, and detail
+documentation. `--providers` validates the provider component contract.
+
+### Authentication
+
+`--auth` performs provider-specific access checks for configured runnable
+targets without executing tasks:
+
+```console
+anvil validate --auth --config-file ./yaml/targets.yaml
+anvil validate --tasks --processors --providers --auth \
+  --config-file ./yaml/targets.yaml
+```
+
+Authentication uses the configuration's provider credential model:
+
+- AWS creates a boto3 session and checks STS identity.
+- Azure acquires an Azure Resource Manager token.
+- GCP reports auth validation as deferred; credentials are built and validated
+  when the provider prepares runtime sessions.
+- GitHub creates the configured token or app client and checks access.
+
+Anvil caches equivalent authentication checks within the command and gives each
+target its own result. Use `--quiet` in CI to suppress validation output and
+rely on the exit code.
+
+`--include` narrows auth checks to matching provider target IDs. `--exclude` is
+valid only for discovery-based configurations. The two switches are mutually
+exclusive.
 
 ## Run
 
-Execute configured organizations and accounts from one or more YAML files:
+Execute one schema v2 file:
 
 ```console
-anvil run --help
-anvil run --config-file ./yaml/orgs.yaml
+anvil run --config-file ./yaml/targets.yaml
 ```
 
-Run multiple YAML files sequentially:
+Execute multiple files sequentially:
 
 ```console
-anvil run --config-file ./yaml/orgs.yaml ./yaml/orgs2.yaml ./yaml/orgs3.yaml
+anvil run --config-file ./yaml/aws.yaml ./yaml/azure.yaml ./yaml/github.yaml
 ```
 
-Each YAML remains an isolated run with its own summary file, and the overall
-command exits non-zero if any YAML run fails.
+Each file is an isolated run with its own output directory. The overall command
+exits non-zero if any file fails.
 
-Organization configs write per-target full results under `organizations/`:
+Runtime selection and mode switches:
+
+```console
+# Narrow to provider execution-target IDs.
+anvil run --config-file ./yaml/targets.yaml --include target-a target-b
+
+# Exclude IDs from discovery-based targets.
+anvil run --config-file ./yaml/targets.yaml --exclude target-c
+
+# Force every selected task into dry-run mode.
+anvil run --config-file ./yaml/targets.yaml --dry-run
+```
+
+`--include` and `--exclude` are mutually exclusive. `--benchmark` adds detailed
+phase timings to result JSON and can substantially increase output size.
+
+Every run writes:
 
 ```text
 results/
@@ -221,159 +148,103 @@ results/
     <run-id>/
       summary.json
       results.jsonl
-      organizations/
-        <organization>.json
+      targets/
+        <configured-target>.json
+      reports/
+        ...
 ```
 
-Account-group configs use `account-groups/`:
-
-```text
-results/
-  <config-stem>/
-    <run-id>/
-      summary.json
-      results.jsonl
-      account-groups/
-        <account-group>.json
-```
-
-Use `--benchmark` only for performance investigations. It adds engine, target,
-account, region, and result-write timing details that can dramatically increase
-output size on large account, region, or task runs.
+`summary.json` contains the engine summary, `targets/` contains the full result
+for each configured target, and `results.jsonl` contains flattened entity and
+task records for querying and reruns.
 
 ## Processors
 
-Processors turn completed Anvil results into reports or integration artifacts.
-They are separate from tasks: tasks run against account-region sessions, while
-processors run after target execution or against an existing results directory.
-
-List available stock and user-defined processors:
+Processors turn completed results into reports or integration artifacts. List
+and validate them without running cloud tasks:
 
 ```console
 anvil list --processors
-```
-
-Validate all discovered processors without running them:
-
-```console
 anvil validate --processors
 ```
 
-Validate selected processors by name:
+Run a processor against a completed run directory:
 
 ```console
-anvil validate --processors html_report sarif_report
+anvil results \
+  --results-dir ./results/targets/2026-07-22T183012Z \
+  --processor html_report \
+  --output report.html
 ```
 
-Run a processor against a completed results directory:
+The run directory must contain `summary.json` and target JSON beneath
+`targets/`. Relative processor output is resolved under that run's `reports/`
+directory.
 
-```console
-anvil results --results-dir ./results/orgs/2026-05-01T183012Z --processor html_report --output report.html
-```
+Targets can also run processors automatically with `post_run`. By default they
+run after successful targets; `run_on_failure: true` enables reports designed to
+handle failed target results.
 
-`--results-dir` must point at a run directory that contains `summary.json` and
-the target result files under `organizations/` or `account-groups/`. Processor
-outputs are resolved under the run's `reports/` directory, so the command above
-writes `./results/orgs/2026-05-01T183012Z/reports/report.html`.
-
-Attach processors to a target with `post_run` when the report should be produced
-automatically after `anvil run`:
-
-```yaml
-post_run:
-  - processor: html_report
-    output: status.html
-    run_on_failure: true
-```
-
-By default, target `post_run` processors run only after successful targets. Set
-`run_on_failure: true` for processors that are designed to handle failed target
-results. Target-level processor output is also written under `reports/` and is
-prefixed with the target name to avoid collisions across multiple targets.
-
-Use `html_report` for a self-contained human-readable report. Use `sarif_report`
-when tasks return `sarif_findings` and the result should be exported as SARIF
-2.1.0 for security or code-scanning tools.
+Built-in processors include a self-contained `html_report` and a
+`sarif_report` for `detect_` task results containing `sarif_findings`.
 
 ## Results
 
-Runs write full JSON result files and flattened JSONL records for quick
-filtering:
-
-```text
-./results/{config-stem}/{run-id}/results.jsonl
-```
-
-Common queries:
+Without `--results-file`, `anvil results` searches for every `results.jsonl`
+under `./results`.
 
 ```console
-# Show every failure under ./results.
+# Show every failure.
 anvil results --status failed
 
-# Show failures for one organization or account-group target.
-anvil results --target prod --status failed
+# Show failed entities for one configured target.
+anvil results --type entity --target production --status failed
 
-# Show failed account records only.
-anvil results --type account --status failed
+# Select an AWS account, Azure subscription, GCP project, or GitHub target.
+anvil results --entity 111111111111
+anvil results --entity octo-org/platform-api
 
-# Filter records for one account by AWS account ID or friendly account name.
-anvil results --account 111111111111
-anvil results --account dev
+# Filter task records by provider location and task.
+anvil results --type task --region us-east-1 --task count_vpc
 
-# Combine account filtering with other result filters.
-anvil results --account dev --status failed
-anvil results --account 111111111111 --type task --task count_vpcs
+# Choose columns and cap output.
+anvil results --status failed \
+  --fields target,entity_id,entity_type,region,task,error --limit 20
 
-# Show task records for one task name.
-anvil results --type task --task count_vpcs
-
-# Show task records for one AWS region.
-anvil results --type task --region us-east-1
-
-# Show a compact failure view with selected fields and a row limit.
-anvil results --status failed --fields account_id,region,task,error --limit 20
-
-# Emit failed task records as JSONL.
+# Emit structured output.
 anvil results --type task --status failed --jsonl
 ```
 
-Advanced queries:
+Query explicit result files:
 
 ```console
-# Query one explicit run results file.
-anvil results --status failed --results-file ./results/orgs/2026-05-01T183012Z/results.jsonl
+anvil results --status failed \
+  --results-file ./results/aws/run-a/results.jsonl
 
-# Query multiple explicit run results files in one command.
-anvil results --status failed --results-file ./results/orgs/run-a/results.jsonl ./results/accounts/run-b/results.jsonl
-
-# Filter one task in one target and print selected fields.
-anvil results --type task --target prod --task count_vpcs --fields account_id,region,status,error
-
-# Show failure rows with target, account, region, task, and error context.
-anvil results --status failed --fields record_type,target,account_id,region,task,error
+anvil results --status failed \
+  --results-file ./results/aws/run-a/results.jsonl \
+                 ./results/github/run-b/results.jsonl
 ```
 
-The result query command supports `--type`, `--target`, `--account`,
-`--region`, `--task`, `--status`, `--fields`, `--limit`, `--results-file` with
-one or more JSONL paths, and `--json` or `--jsonl` for structured filtered
-output. `--status failed` matches any non-success status. Without
-`--results-file`, Anvil queries every `results.jsonl` file under `./results`.
+Available filters include `--type {entity,task}`, `--target`, `--entity`,
+`--region`, `--task`, `--status`, `--fields`, and `--limit`. Use `--json` or
+`--jsonl` for structured output. `--status failed` matches any non-success
+status.
 
 ## Rerun Failures
 
-`--rerun` infers rerun scope from result records. It reloads the original config,
-reruns only matching failed accounts, narrows to failed regions and tasks when
-task-level failures are available, and includes required task dependencies
-automatically.
-
-Use scope filters such as `--target`, `--account`, `--region`, and `--task` to
-limit a rerun even further. Report-shaping flags such as `--type`, `--fields`,
-`--limit`, `--json`, and `--jsonl` are not supported with `--rerun`.
+`--rerun` loads the original config and infers the narrowest safe scope from
+failed records. It selects failed configured targets and entities, narrows to
+failed regions and tasks when task records are available, and includes required
+task dependencies.
 
 ```console
-# Rerun failures from one explicit run results file.
-anvil results --status failed --results-file ./results/orgs/2026-05-01T183012Z/results.jsonl --rerun
-
-# Rerun failures from multiple explicit run results files in one command.
-anvil results --status failed --results-file ./results/orgs/run-a/results.jsonl ./results/accounts/run-b/results.jsonl --rerun
+anvil results --status failed \
+  --results-file ./results/aws/run-a/results.jsonl \
+  --rerun
 ```
+
+Further narrow a rerun with `--target`, `--entity`, `--region`, or `--task`.
+Use `--dry-run` to force dry-run behavior and `--benchmark` to collect rerun
+timings. Report-shaping switches such as `--type`, `--fields`, `--limit`,
+`--json`, and `--jsonl` cannot be combined with `--rerun`.

@@ -1,211 +1,206 @@
 # Task Contract
 
-Anvil keeps AWS business logic in plain Python task modules while the engine
-handles authentication, role assumption, dependency ordering, result
-aggregation, and concurrency.
+Anvil keeps provider business logic in plain Python task modules while the
+engine handles provider authentication, target resolution, dependency ordering,
+bounded concurrency, and result aggregation.
 
-## Task Discovery
+## Task Packages and Discovery
 
-Tasks are discovered from two sources:
+Task compatibility is determined by the package that contributes the module:
 
-- Stock tasks shipped with Anvil under `anvil.tasks`.
-- Plugin tasks registered through the `anvil.tasks` entry-point group.
+- `anvil.providers.tasks.<task>` is universal.
+- `anvil.providers.aws.tasks.<task>` is AWS-only.
+- `anvil.providers.azure.tasks.<task>` is Azure-only.
+- `anvil.providers.gcp.tasks.<task>` is GCP-only.
+- `anvil.providers.github.tasks.<task>` is GitHub-only.
 
-Directories named `tasks/` are conventional only. They are not automatically
-scanned unless the surrounding project registers tasks through the plugin
-mechanism.
+Third-party packages register task package roots through entry points:
 
-Once configured, custom tasks behave like stock tasks:
+```toml
+[project.entry-points."anvil.providers.tasks"]
+universal-tasks = "company_anvil.tasks"
 
-```yaml
-tasks:
-  - name: inventory
-  - name: cleanup
-    depends_on: [inventory]
+[project.entry-points."anvil.providers.aws.tasks"]
+aws-tasks = "company_anvil.aws_tasks"
+
+[project.entry-points."anvil.processors"]
+processors = "company_anvil.processors"
+
+[project.entry-points."anvil.provider_packages"]
+providers = "company_anvil.providers"
+```
+
+Each public Python filename is the task name. Discovery records component names
+and sources without importing every implementation; Anvil imports only selected
+tasks during normal execution. Duplicate applicable task names are rejected as
+ambiguous and report every conflicting source.
+
+For a provider collection, each immediate child package is a provider and must
+expose `create_provider_instance()`. Processor package roots use the same
+public-module discovery pattern as task packages.
+
+Use these commands to inspect and validate discovery:
+
+```console
+anvil list --tasks
+anvil list --tasks count_vpc --detail
+anvil validate --tasks
+anvil validate --tasks count_vpc noop
 ```
 
 ## Runtime Contract
 
-Each task module must define a callable `run` function. This is the minimum
-interface required for Anvil to discover and execute a task.
+Every task module defines a callable `run(...)` function. The provider-neutral
+runtime keyword arguments are:
 
 ```python
 from anvil.actions import ActionRecorder
 
+
 def run(
     *,
-    account_id: str,
-    account_alias: str,
+    provider: str,
+    execution_target_id: str,
+    execution_target_name: str,
+    execution_target_type: str,
+    region: str,
     session,
     dry_run: bool,
     metadata: dict[str, object],
     actions: ActionRecorder,
-) -> None:
-    """
-    Execute the task for one AWS account-region pair.
-    """
+) -> dict[str, object] | None:
+    """Run the task for one provider execution target and location."""
 ```
 
-## Arguments
+- `provider`: selected provider name.
+- `execution_target_id`: provider-specific ID, such as an account,
+  subscription, project, owner, or repository ID.
+- `execution_target_name`: provider-supplied display name.
+- `execution_target_type`: provider-specific type such as `account`,
+  `subscription`, `project`, `organization`, or `repository`.
+- `region`: current provider region or location; GitHub uses `global`.
+- `session`: provider session scoped to the current target and location.
+- `dry_run`: whether task mutations should be suppressed.
+- `metadata`: target metadata from the YAML configuration.
+- `actions`: recorder for planned or completed audit actions.
 
-- `account_id`: AWS account ID currently being processed.
-- `account_alias`: Friendly name of the account.
-- `session`: boto3-style session already scoped to the target account and
-  region.
-- `dry_run`: Indicates whether the task should make changes.
-- `metadata`: Organization metadata defined in the configuration file.
-- `actions`: Action recorder provided by Anvil for planned or completed work.
+Anvil invokes tasks with keyword arguments. A task may accept `**kwargs`, but
+explicit parameters make the contract and generated detail output clearer.
+Positional-only parameters are unsupported.
 
-The return value is optional. Any returned data may be included in execution
-results.
+Task code can also declare a `task_context` parameter to receive the complete
+immutable `TaskCallContext`; the nine arguments above remain the required
+public contract unless `**kwargs` is accepted.
+
+## Session Objects
+
+The `session` interface is provider-specific:
+
+- AWS tasks receive a boto3-compatible session with lazy client caching for the
+  current account and region.
+- Azure tasks receive an Azure session containing the credential,
+  subscription ID, and location.
+- GCP tasks receive a GCP session containing credentials, project ID, quota
+  project, and region.
+- GitHub tasks receive a GitHub session/client context for the current owner or
+  repository.
+
+Universal tasks should avoid assuming a provider SDK unless they branch on
+`provider`. Provider-specific tasks should validate the execution target type
+they require and provide actionable dependency errors.
+
+## Task Scope
+
+Tasks are region-scoped by default. A module can opt into target scope:
+
+```python
+TASK_SCOPE = "target"
+```
+
+A region-scoped task runs once per resolved region or location. A target-scoped
+task runs once per execution target using its first resolved location. A task
+can run only when the selected provider advertises support for that scope; AWS
+currently supports region scope, while Azure, GCP, and GitHub support both
+region and target scope.
+
+## Detail Documentation
+
+Every task needs detail documentation. Add a Google-style docstring to
+`run(...)`; a module docstring is accepted as a fallback. This text powers
+`anvil list --tasks <name> --detail` and is checked by task validation.
+
+Document the operation, provider and scope assumptions, metadata keys, return
+shape, and important exceptions. Never include credentials or secret values in
+task detail text or results.
 
 ## Returned Results
 
-A task can return any JSON-serializable value from `run()`. Returned data is the
-native baseline for structured task output. It is stored under each task
-result's `result` field and is useful for inventory, measurements, findings,
-resource IDs, counts, timing, and other task-specific data.
+A task may return any JSON-serializable value. Anvil stores it in the task
+result's `result` field and includes it in flattened JSONL output.
 
 ```python
 def run(
     *,
-    account_id: str,
-    account_alias: str,
+    provider: str,
+    execution_target_id: str,
+    execution_target_name: str,
+    execution_target_type: str,
+    region: str,
     session,
     dry_run: bool,
     metadata: dict[str, object],
-    actions=None,
+    actions,
 ) -> dict[str, object]:
-    user_name = str(metadata["user_name"])
-    iam = session.client("iam")
-    groups = [
-        group["GroupName"]
-        for group in iam.list_groups_for_user(UserName=user_name)["Groups"]
+    client = session.client("ec2")
+    vpc_ids = [
+        vpc["VpcId"]
+        for page in client.get_paginator("describe_vpcs").paginate()
+        for vpc in page.get("Vpcs", [])
     ]
-
     return {
-        "user_name": user_name,
-        "dry_run": dry_run,
-        "groups": groups,
-        "summary": {"groups": len(groups)},
+        "account_id": execution_target_id,
+        "region": region,
+        "vpc_count": len(vpc_ids),
+        "vpc_ids": vpc_ids,
     }
 ```
 
-The returned value appears in the task result:
-
-```json
-{
-  "task": "function_returned_results",
-  "region": "us-east-1",
-  "status": "success",
-  "result": {
-    "user_name": "example-user",
-    "dry_run": false,
-    "groups": ["Developers"],
-    "summary": {
-      "groups": 1
-    }
-  },
-  "error": null
-}
-```
-
-Returned data is also available in the flattened JSONL query artifact. See
-[CLI results](cli.md#results) for query examples.
+Returned results work best for inventory, counts, findings, identifiers,
+measurements, and other structured task data.
 
 ## ActionRecorder
 
-Tasks can use Anvil-provided utilities to produce structured results.
-`ActionRecorder` allows tasks to:
-
-- record planned or executed actions
-- produce structured output for reporting
-- integrate with Anvil execution summaries
-
-Using these utilities is not required, but it is recommended for tasks that
-modify infrastructure or need richer audit output.
-
-Record concise audit-level actions from a task:
+Use `ActionRecorder` for a concise audit trail of planned or completed work:
 
 ```python
-from anvil.actions import ActionRecorder
-
-def run(
-    *,
-    account_id: str,
-    account_alias: str,
-    session,
-    dry_run: bool,
-    metadata: dict[str, object],
-    actions: ActionRecorder,
-) -> None:
-    if dry_run:
-        actions.record("(dry-run) Would validate account configuration")
-    else:
-        actions.record("Validated account configuration")
+if dry_run:
+    actions.record("(dry-run) Would update the repository setting")
+else:
+    actions.record("Updated the repository setting")
 ```
 
-## Choosing a Result Channel
+Tasks may use returned data and recorded actions together. Dry-run-aware
+mutation tasks should record the planned operation without issuing the provider
+mutation.
 
-Use returned results when the task needs to report structured data:
+## Validation
 
-- inventory lists
-- counts and measurements
-- validation findings
-- resource IDs and metadata
-- timing or diagnostic values
+`anvil validate --tasks` performs structural validation without running tasks
+or calling provider APIs. It verifies:
 
-Use `ActionRecorder` when the task needs a concise audit trail:
+1. task names are non-empty and unambiguous
+2. modules expose a callable `run(...)`
+3. the runtime signature accepts all required keyword arguments
+4. positional-only parameters are absent
+5. detail documentation is present
 
-- created, updated, or deleted resources
-- skipped resources and decisions
-- dry-run planned actions
-- governance or cleanup outcomes
-
-Production tasks may use both channels when that is useful.
-
-See the [Anvil Results examples](https://github.com/JSChronicles/anvil/tree/main/examples/Results)
-for complete returned-result and `ActionRecorder` examples.
-
-## Task Validation
-
-Anvil includes a task validation mode that checks discovered tasks for
-structural correctness without executing them:
-
-```console
-anvil validate --tasks
-```
-
-Validation verifies that:
-
-1. the task has a valid non-empty name
-2. the task exposes a callable `run(...)` entrypoint
-3. the `run(...)` signature includes required runtime parameters
-4. the task does not use unsupported positional-only parameters
-5. duplicate task names are rejected
-
-Because this validation is structural, it does not perform AWS calls or execute
-task logic.
-
-Example validation failure:
-
-```console
-[ERROR] task validation failed:
-  - task 'cleanup' is missing required run() parameters: ['account_alias']
-  - task 'inventory' is missing required run() parameters: ['metadata']
-```
-
-Example validation success:
-
-```console
-[OK] all tasks are valid
-```
+Configuration validation additionally checks that each configured task is
+compatible with the selected provider and task scope.
 
 ## Dependency-Aware Execution
 
-Tasks execute in dependency order within each account-region pair.
-
-If a task depends on a failed earlier dependency, Anvil records that task as
-blocked by dependency failure. Optional tasks can be skipped after dependency
-failure without failing the entire account, while non-optional task failures
-stop further execution for that region.
+Tasks execute in dependency order within each execution-target/location stream.
+If a dependency fails, dependent tasks are recorded as blocked. Optional task
+failures are recorded without necessarily failing the execution target;
+non-optional failures stop further work for that stream and participate in
+fail-fast cancellation.
