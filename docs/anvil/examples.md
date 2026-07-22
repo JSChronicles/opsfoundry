@@ -1,46 +1,76 @@
 # Examples
 
-This page collects practical examples and reference patterns for running Anvil.
+The [Anvil examples directory](https://github.com/JSChronicles/anvil/tree/main/examples)
+contains schema v2 configurations for every built-in provider.
+
+## AWS
+
+- [Simple organization](https://github.com/JSChronicles/anvil/blob/main/examples/01-aws-simple-organization.yaml)
+- [Multiple targets](https://github.com/JSChronicles/anvil/blob/main/examples/02-aws-multi-target.yaml)
+- [Include and exclude](https://github.com/JSChronicles/anvil/blob/main/examples/03-aws-include-exclude.yaml)
+- [Advanced multi-region audit](https://github.com/JSChronicles/anvil/blob/main/examples/04-aws-advanced.yaml)
+
+AWS support is included in the base install.
+
+## Azure
+
+- [Simple subscription](https://github.com/JSChronicles/anvil/blob/main/examples/05-azure-simple-subscription.yaml)
+- [Multiple targets](https://github.com/JSChronicles/anvil/blob/main/examples/06-azure-multi-target.yaml)
+- [Tenant include and exclude](https://github.com/JSChronicles/anvil/blob/main/examples/07-azure-include-exclude.yaml)
+- [Advanced resource-group inventory](https://github.com/JSChronicles/anvil/blob/main/examples/08-azure-advanced.yaml)
+
+Install the Azure SDK dependencies with `pip install "anvil[azure]"`, or use
+`uv sync --extra azure` in an Anvil source checkout.
+
+## GCP
+
+- [Simple project](https://github.com/JSChronicles/anvil/blob/main/examples/09-gcp-simple-project.yaml)
+- [Multiple targets](https://github.com/JSChronicles/anvil/blob/main/examples/10-gcp-multi-target.yaml)
+- [Project include selection](https://github.com/JSChronicles/anvil/blob/main/examples/11-gcp-include-exclude.yaml)
+- [Advanced project inventory](https://github.com/JSChronicles/anvil/blob/main/examples/12-gcp-advanced.yaml)
+
+Install the GCP SDK dependencies with `pip install "anvil[gcp]"`, or use
+`uv sync --extra gcp` in an Anvil source checkout.
+
+## GitHub
+
+- [Simple repository](https://github.com/JSChronicles/anvil/blob/main/examples/13-github-simple-repository.yaml)
+- [Multiple targets](https://github.com/JSChronicles/anvil/blob/main/examples/14-github-multi-target.yaml)
+- [Organization and repository selection](https://github.com/JSChronicles/anvil/blob/main/examples/15-github-include-exclude.yaml)
+- [Advanced security audit with GitHub App auth](https://github.com/JSChronicles/anvil/blob/main/examples/16-github-advanced.yaml)
+
+GitHub examples cover token auth, GitHub App auth, organization-scoped code
+search, repository security settings, rulesets, branch protection, and security
+alert listing.
+
+Install the GitHub client dependency with `pip install "anvil[github]"`, or use
+`uv sync --extra github` in an Anvil source checkout.
 
 ## GitHub Actions
 
-For a complete GitHub Actions example that runs Anvil with AWS OIDC and uploads
-generated JSON results as workflow artifacts, see
-[examples/github-actions](https://github.com/JSChronicles/anvil/blob/main/examples/github-actions/README.md).
-
-## YAML Examples
-
-For runnable YAML examples covering different target and task patterns, see the
-[Anvil examples directory](https://github.com/JSChronicles/anvil/tree/main/examples).
+For AWS OIDC workflows that execute Anvil and upload generated JSON results as
+workflow artifacts, see the
+[GitHub Actions examples](https://github.com/JSChronicles/anvil/blob/main/examples/github-actions/README.md).
 
 ## Result Examples
 
-For task examples that show returned result data and `ActionRecorder` usage, see
-the [Anvil Results examples](https://github.com/JSChronicles/anvil/tree/main/examples/Results).
+The [result examples](https://github.com/JSChronicles/anvil/tree/main/examples/Results)
+show structured task return values and `ActionRecorder` usage.
 
 ## Repository Template
 
-Create a dedicated task repository using the
+Create a dedicated task repository with the
 [foundry-anvil-template](https://github.com/JSChronicles/foundry-anvil-template).
+It provides a project layout for custom tasks and processors, YAML examples,
+validation, and CI outside the main Anvil repository.
 
-The template provides a ready project layout for custom tasks, YAML examples,
-validation, and CI outside of the main Anvil repository.
+## Standalone AWS Multi-Account Template
 
-## Standalone Multi-Account Script Template
+If you need a small AWS Organizations script instead of the Anvil framework,
+start with the
+[standalone multi-account template](templates/aws_multi_account_template.py).
 
-If you do not need the full Anvil framework and only want a small starting point
-for AWS Organization tasks, see the
-[standalone multi-account script template](templates/aws_multi_account_template.py).
-
-The template provides:
-
-- AWS Organizations account discovery
-- active-account filtering with `--include` and `--exclude`
-- parallel per-account execution
-- multiple regions per account
-- assume-role handling for member accounts
-- dry-run support
-- JSON result output
-
-Replace the internals of `account_task()` with your own per-account logic and
+It includes active-account discovery, include/exclude filters, parallel account
+execution, multiple regions, member-account role assumption, dry-run handling,
+and JSON output. Replace `account_task()` with the work for your script and
 adapt the example arguments as needed.

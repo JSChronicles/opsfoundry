@@ -12,10 +12,10 @@
           <li>
             <a class="project-card-link" href="anvil/">
               <span class="soon-project">
-                <img class="soon-icon" src="images/anvil.png" alt="" aria-hidden="true">
+                <img class="soon-icon" src="images/anvil-logo-dark.png" alt="" aria-hidden="true">
                 <strong>Anvil</strong>
               </span>
-              <p>A declarative execution engine for running Python tasks across AWS accounts, regions, and organizations.</p>
+              <p>A provider-aware execution engine for running Python tasks across cloud and GitHub target fleets.</p>
               <span class="status">In testing</span>
             </a>
           </li>
