@@ -4,6 +4,12 @@ Provider profiles keep reusable authentication and endpoint settings outside
 workflow YAML. They live in `~/.anvil/config.toml`; set `ANVIL_CONFIG` to use a
 different file.
 
+Profiles are optional. Cloudflare, Datadog, GitHub, GitLab, and PagerDuty use
+this shared profile file. AWS uses boto3 profiles or its normal credential
+chain, Azure uses explicit service-principal settings or
+`DefaultAzureCredential`, and GCP uses a credentials file or application-default
+credentials.
+
 Profiles are namespaced by provider and profile name:
 
 ```toml
@@ -46,6 +52,11 @@ provider:
   options: {}
 # Uses providers.gitlab.default.
 ```
+
+If no `default` table exists, Anvil leaves profile fields unset and the provider
+uses its normal environment variables, SDK credential chain, workload identity,
+or other provider-native fallback where supported. Anvil does not require
+`~/.anvil/config.toml` to exist.
 
 A named profile cannot be mixed with inline profile fields such as
 `token_env`, `api_url`, `site`, or `url`. Provider-specific selectors that are
