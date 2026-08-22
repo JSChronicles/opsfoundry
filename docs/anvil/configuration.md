@@ -27,23 +27,49 @@ targets:
 at once. Each target then has its own provider, selection, concurrency, task,
 dry-run, fail-fast, processor, and metadata settings.
 
+## Defaults and Limits
+
+| Setting | Scope | Default | Constraint |
+| --- | --- | --- | --- |
+| `schema_version` | File | Required | Must be `2` |
+| `max_parallel_targets` | File | `1` | Integer, minimum `1` |
+| `name` | Target | Required | Non-empty and unique in the file |
+| `provider.name` | Target | Required | Discovered provider name |
+| `provider.mode` | Target | Required | Provider-supported mode |
+| `provider.options` | Target | `{}` | Provider-owned mapping |
+| `regions` | Target | Provider default | Non-empty unique strings when set |
+| `tasks` | Target | `noop` | Non-empty task list when set |
+| `max_workers` | Target | `10` | Integer from `1` through `100` |
+| `max_parallel_regions` | Target | `1` | Integer from `1` through `4` |
+| `fail_fast` | Target | `false` | Boolean |
+| `dry_run` | Target | `false` | Boolean |
+| `metadata` | Target or task | `{}` | Free-form mapping |
+
+Unknown file, target, provider-block, task, dependency-reference, and processor
+fields are rejected. Provider option keys remain provider-owned and are checked
+during semantic validation.
+
 ## Provider Block
 
 The `provider` block has three fields:
 
-- `name`: provider component name, such as `aws`, `azure`, `gcp`, or `github`
+- `name`: discovered provider component name
 - `mode`: provider-specific discovery or explicit-target mode
 - `options`: provider-specific authentication and runtime options
 
 Use `anvil list --providers` to inspect installed providers and
 `anvil validate --providers` to validate their contracts.
 
-| Provider | Modes | Execution targets | Common options |
-| --- | --- | --- | --- |
-| AWS | `organization`, `accounts` | AWS accounts | `profile`, `role_name` |
-| Azure | `tenant`, `subscriptions` | Azure subscriptions | `tenant_id`, `client_id`, `client_secret` |
-| GCP | `projects`; `organization` is reserved but not implemented | GCP projects | `credentials_path`, `quota_project_id`; `organization_id` is reserved for organization mode |
-| GitHub | `organizations`, `repositories` | GitHub organizations or repositories | `profile`, `token_env`, `app_id`, `private_key_env`, `private_key_path`, `api_url`, `api_version` |
+| Provider | Modes | Execution targets |
+| --- | --- | --- |
+| AWS | `organization`, `accounts` | AWS accounts |
+| Azure | `tenant`, `subscriptions` | Azure subscriptions |
+| Cloudflare | `accounts`, `zones` | Cloudflare accounts or zones |
+| Datadog | `organization` | One key-bound organization |
+| GCP | `projects`; `organization` is reserved | GCP projects |
+| GitHub | `organizations`, `repositories` | GitHub organizations or repositories |
+| GitLab | `groups`, `projects` | GitLab groups or projects |
+| PagerDuty | `account` | One PagerDuty account |
 
 Discovery modes resolve execution targets from the provider. Explicit modes use
 the IDs supplied through `include`. AWS `organization` and Azure `tenant`
@@ -52,7 +78,9 @@ accessible projects when `include` is omitted or use explicit project IDs;
 GCP `organization` currently raises a not-implemented error. GitHub
 `organizations` accepts owner logins and either runs a dedicated organization
 code search or discovers repositories beneath those owners; repository mode
-uses `owner/repository` IDs.
+uses `owner/repository` IDs. See the [provider reference](providers.md) for
+options, authentication, selection rules, install extras, and examples for
+every stock provider.
 
 ## Provider Examples
 
@@ -87,6 +115,25 @@ targets:
     regions: [eastus]
     exclude:
       - 99999999-aaaa-bbbb-cccc-dddddddddddd
+    tasks:
+      - name: count_resource_groups
+```
+
+Explicit Azure subscription selection:
+
+```yaml
+schema_version: 2
+
+targets:
+  - name: azure-subscriptions
+    provider:
+      name: azure
+      mode: subscriptions
+      options: {}
+    include:
+      - 00000000-0000-0000-0000-000000000000
+    regions:
+      - eastus
     tasks:
       - name: count_resource_groups
 ```
@@ -141,22 +188,10 @@ GitHub also supports app authentication through `app_id` plus exactly one of
 `private_key_env` or `private_key_path`. A named `profile` cannot be combined
 with inline auth options.
 
-GitHub profiles are TOML tables in `~/.github/config` by default. Set
-`ANVIL_GITHUB_CONFIG` to use another file:
-
-```toml
-[default]
-token_env = "GITHUB_TOKEN"
-
-[security-app]
-app_id = "12345"
-private_key_env = "GITHUB_APP_PRIVATE_KEY"
-```
-
-Set `provider.options.profile` to select a named table. Without an explicit
-profile or inline auth options, Anvil tries the `default` profile, then
-`GITHUB_TOKEN`, `GH_TOKEN`, `.netrc`, and `gh auth token`. `api_url` and
-`api_version` support GitHub Enterprise and explicit API-version settings.
+Reusable Cloudflare, Datadog, GitHub, GitLab, and PagerDuty settings live in
+provider-namespaced tables in `~/.anvil/config.toml`. See
+[provider profiles](provider-profiles.md) for named/default profiles,
+environment-variable references, multiple endpoints, and advanced examples.
 
 ## Selection
 
@@ -170,17 +205,21 @@ overrides.
   does not currently support exclusion in either mode.
 - Unknown discovered IDs produce a warning while valid targets continue.
 
-The meaning of an ID is provider-specific: an AWS account ID, Azure subscription
-ID, GCP project ID, GitHub owner login, or GitHub `owner/repository` name.
+The meaning of an ID is provider-specific. See
+[selectors and regions](selectors-and-regions.md) for every provider mode,
+AWS `management`/`payer` keywords, CLI narrowing, and identifier tips.
 
 ## Regions and Locations
 
 `regions` is the provider location dimension passed to task execution:
 
-- AWS uses enabled AWS regions and supports explicit values, `all`, and glob
-  selectors such as `us-*`.
-- Azure and GCP use cloud locations and can resolve location selectors.
-- GitHub uses the provider default `global` location.
+- AWS uses enabled AWS Regions.
+- Azure and GCP use provider-discovered cloud locations.
+- Cloudflare, Datadog, GitHub, GitLab, and PagerDuty use `global`.
+
+AWS, Azure, and GCP support provider-appropriate `all` and glob selectors. See
+[selectors and regions](selectors-and-regions.md) for exact mode support and
+availability behavior.
 
 Tasks with target scope run once for an execution target using its first
 resolved location. Region-scoped tasks run once per resolved location. The
@@ -193,7 +232,7 @@ provider declares which scopes it supports.
   target, such as accounts, subscriptions, projects, or repositories.
 - `max_parallel_regions` limits concurrent regions or locations within one
   execution target.
-- `fail_fast` cooperatively stops pending work after a non-optional failure.
+- `fail_fast` cooperatively stops pending work after a task failure.
 
 Increase concurrency gradually and benchmark with the provider APIs, target
 count, location count, and task mix expected in production.
@@ -206,31 +245,38 @@ provider mutation; task implementations must honor dry-run behavior. The CLI
 
 ## Tasks and Dependencies
 
-Tasks are ordered declaratively and may depend on earlier tasks:
+Tasks are ordered declaratively and may depend on earlier invocations:
 
 ```yaml
 tasks:
   - name: inventory
-  - name: report
-    depends_on: [inventory]
-  - name: cleanup
-    depends_on: [inventory, report]
-    optional: true
+  - id: report_inventory
+    name: report
+    depends_on:
+      - inventory
+    dependency_data:
+      inventory_result:
+        task_id: inventory
+        path: result
 ```
 
-Anvil validates the dependency graph before execution. A failed dependency
-blocks dependent tasks. A failed optional task is recorded without necessarily
-failing the execution target.
+Anvil validates the dependency graph before execution. Normal dependents run
+only after every dependency succeeds. `always_run` supports cleanup after
+unsuccessful dependencies, and `dependency_data` selects complete task results
+or nested values for consumers.
 
 Task compatibility is based on package location. Universal tasks apply to every
 provider; provider-specific task packages apply only to their provider. See the
-[task contract](task-contract.md) for package and runtime details.
+[task contract](task-contract.md) for the callable interface and
+[task workflows](task-workflows.md) for IDs, result sharing, recovery, and
+scope-aware dependencies.
 
 ## Metadata
 
-The target `metadata` mapping is passed unchanged to each task. Use it for task
-inputs such as expected policy values, branch names, search queries, runtime
-lists, or reporting context.
+Target `metadata` supplies shared static task inputs. Task-level metadata is
+recursively merged over it for that invocation. Use metadata for expected
+policy values, branch names, search queries, runtime lists, or reporting
+context; use `dependency_data` for values produced during the run.
 
 ## Post-Run Processors
 
@@ -245,4 +291,6 @@ post_run:
 
 Processor output is written beneath the run's `reports` directory. Processors
 run after successful targets by default; `run_on_failure: true` also runs a
-processor when the target failed.
+processor when the target failed. See
+[extension best practices](extension-best-practices.md#build-a-processor) to
+create and package a processor.

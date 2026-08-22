@@ -5,12 +5,13 @@
 </p>
 
 Anvil is a declarative, provider-aware execution engine for running Python tasks
-across cloud and GitHub target fleets.
+across cloud and service target fleets.
 
 Describe the work in YAML, keep task logic in plain Python modules, and let the
 engine handle authentication, target discovery, dependency ordering, bounded
-concurrency, and structured results. AWS, Azure, GCP, and GitHub providers ship
-with Anvil, and extension packages can add providers, tasks, and processors.
+concurrency, and structured results. AWS, Azure, Cloudflare, Datadog, GCP,
+GitHub, GitLab, and PagerDuty providers ship with Anvil, and extension packages
+can add providers, tasks, and processors.
 
 ## Why Anvil?
 
@@ -22,8 +23,8 @@ reporting.
 ## Core Capabilities
 
 - Declarative orchestration with reusable YAML configuration.
-- Provider-aware targets for AWS accounts, Azure subscriptions, GCP projects,
-  and GitHub organizations or repositories.
+- Provider-aware targets for cloud accounts, subscriptions, projects,
+  organizations, repositories, zones, groups, and SaaS accounts.
 - Explicit bounded concurrency for configured targets, resolved execution
   targets, and regions or locations.
 - Shared provider discovery, authentication, and session reuse during a run.
@@ -34,7 +35,7 @@ reporting.
 
 ## Installation
 
-The base package includes AWS support:
+Anvil 0.31 requires Python 3.14. The base package includes AWS support:
 
 ```console
 pip install anvil
@@ -44,8 +45,12 @@ Install the SDK extras needed by the configured providers:
 
 ```console
 pip install "anvil[azure]"
+pip install "anvil[cloudflare]"
+pip install "anvil[datadog]"
 pip install "anvil[gcp]"
 pip install "anvil[github]"
+pip install "anvil[gitlab]"
+pip install "anvil[pagerduty]"
 ```
 
 ## Repository Template
@@ -63,7 +68,18 @@ validation, and CI outside of the main Anvil repository.
   commands.
 - Read the [task contract](task-contract.md) for custom task discovery,
   validation, and the `run(...)` interface.
+- Use the [built-in components](built-in-components.md) catalog to choose stock
+  tasks and processors and see their important metadata inputs.
 - Read [configuration](configuration.md) for schema v2 provider targets,
   selection, location, concurrency, and metadata concepts.
+- Use the [provider reference](providers.md) and
+  [provider profiles](provider-profiles.md) for provider-specific modes,
+  authentication, endpoints, and examples.
+- Read [selectors and regions](selectors-and-regions.md) for `include`,
+  `exclude`, AWS account keywords, `all`, and region globs.
+- Read [task workflows](task-workflows.md) for dependencies, result sharing,
+  recovery data, and scope-aware fan-out/fan-in.
+- Read [extension best practices](extension-best-practices.md) to build
+  providers, universal tasks, provider tasks, and processors.
 - Read [examples](examples.md) for the repository template, GitHub Actions, and
   standalone multi-account script template.

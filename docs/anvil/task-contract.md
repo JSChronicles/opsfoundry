@@ -9,10 +9,8 @@ bounded concurrency, and result aggregation.
 Task compatibility is determined by the package that contributes the module:
 
 - `anvil.providers.tasks.<task>` is universal.
-- `anvil.providers.aws.tasks.<task>` is AWS-only.
-- `anvil.providers.azure.tasks.<task>` is Azure-only.
-- `anvil.providers.gcp.tasks.<task>` is GCP-only.
-- `anvil.providers.github.tasks.<task>` is GitHub-only.
+- `anvil.providers.<provider>.tasks.<task>` is compatible only with that
+  provider.
 
 Third-party packages register task package roots through entry points:
 
@@ -67,6 +65,7 @@ def run(
     session,
     dry_run: bool,
     metadata: dict[str, object],
+    dependency_data: dict[str, object],
     actions: ActionRecorder,
 ) -> dict[str, object] | None:
     """Run the task for one provider execution target and location."""
@@ -78,19 +77,19 @@ def run(
 - `execution_target_name`: provider-supplied display name.
 - `execution_target_type`: provider-specific type such as `account`,
   `subscription`, `project`, `organization`, or `repository`.
-- `region`: current provider region or location; GitHub uses `global`.
+- `region`: current provider region or location; globally scoped providers use
+  `global`.
 - `session`: provider session scoped to the current target and location.
 - `dry_run`: whether task mutations should be suppressed.
 - `metadata`: target metadata from the YAML configuration.
+- `dependency_data`: runtime values selected from direct dependency results.
 - `actions`: recorder for planned or completed audit actions.
 
-Anvil invokes tasks with keyword arguments. A task may accept `**kwargs`, but
-explicit parameters make the contract and generated detail output clearer.
-Positional-only parameters are unsupported.
-
-Task code can also declare a `task_context` parameter to receive the complete
-immutable `TaskCallContext`; the nine arguments above remain the required
-public contract unless `**kwargs` is accepted.
+Anvil invokes tasks with keyword arguments. Every explicit parameter must be
+keyword-only. A task may accept `**kwargs`, but explicit parameters make the
+contract and generated detail output clearer. Positional-only and
+positional-or-keyword parameters are unsupported, and extra required parameters
+are rejected because the runtime cannot supply them.
 
 ## Session Objects
 
@@ -102,8 +101,8 @@ The `session` interface is provider-specific:
   subscription ID, and location.
 - GCP tasks receive a GCP session containing credentials, project ID, quota
   project, and region.
-- GitHub tasks receive a GitHub session/client context for the current owner or
-  repository.
+- Cloudflare, Datadog, GitHub, GitLab, and PagerDuty tasks receive
+  provider-owned global session/client contexts for their resolved targets.
 
 Universal tasks should avoid assuming a provider SDK unless they branch on
 `provider`. Provider-specific tasks should validate the execution target type
@@ -118,10 +117,21 @@ TASK_SCOPE = "target"
 ```
 
 A region-scoped task runs once per resolved region or location. A target-scoped
-task runs once per execution target using its first resolved location. A task
-can run only when the selected provider advertises support for that scope; AWS
-currently supports region scope, while Azure, GCP, and GitHub support both
-region and target scope.
+task runs once per execution target using its first resolved location. AWS also
+supports `TASK_SCOPE = "configured_target"` for one invocation across the
+complete configured YAML target. A task can run only when the selected provider
+advertises support for its declared scope.
+
+| Provider | Supported task scopes |
+| --- | --- |
+| AWS | `configured_target`, `region` |
+| Azure | `target`, `region` |
+| Cloudflare | `target`, `region` |
+| Datadog | `target`, `region` |
+| GCP | `target`, `region` |
+| GitHub | `target`, `region` |
+| GitLab | `target`, `region` |
+| PagerDuty | `target`, `region` |
 
 ## Detail Documentation
 
@@ -149,6 +159,7 @@ def run(
     session,
     dry_run: bool,
     metadata: dict[str, object],
+    dependency_data: dict[str, object],
     actions,
 ) -> dict[str, object]:
     client = session.client("ec2")
@@ -190,8 +201,8 @@ or calling provider APIs. It verifies:
 
 1. task names are non-empty and unambiguous
 2. modules expose a callable `run(...)`
-3. the runtime signature accepts all required keyword arguments
-4. positional-only parameters are absent
+3. the runtime signature accepts all required keyword-only arguments
+4. positional parameters and unsupported required parameters are absent
 5. detail documentation is present
 
 Configuration validation additionally checks that each configured task is
@@ -199,8 +210,15 @@ compatible with the selected provider and task scope.
 
 ## Dependency-Aware Execution
 
-Tasks execute in dependency order within each execution-target/location stream.
-If a dependency fails, dependent tasks are recorded as blocked. Optional task
-failures are recorded without necessarily failing the execution target;
-non-optional failures stop further work for that stream and participate in
-fail-fast cancellation.
+Tasks execute in dependency order. Normal dependents require every dependency
+to succeed; unsuccessful dependencies block them. `always_run` tasks wait for
+dependencies to settle and then run for cleanup or recovery. Consumers select
+complete `TaskResult` objects or fields such as `result.users`, `status`,
+`error`, and `actions` through `dependency_data`.
+
+See [task workflows and result sharing](task-workflows.md) for invocation IDs,
+dependency paths, recovery data, and scope-aware fan-out/fan-in.
+
+See [extension best practices](extension-best-practices.md) for packaging and
+implementation guidance for universal tasks, provider tasks, processors, and
+providers.

@@ -10,7 +10,13 @@ nav = [
     { "Execution Model" = "anvil/execution-model.md" },
     { "CLI" = "anvil/cli.md" },
     { "Task Contract" = "anvil/task-contract.md" },
+    { "Built-in Components" = "anvil/built-in-components.md" },
     { "Configuration" = "anvil/configuration.md" },
+    { "Providers" = "anvil/providers.md" },
+    { "Provider Profiles" = "anvil/provider-profiles.md" },
+    { "Selectors and Regions" = "anvil/selectors-and-regions.md" },
+    { "Task Workflows" = "anvil/task-workflows.md" },
+    { "Extension Best Practices" = "anvil/extension-best-practices.md" },
     { "Examples" = "anvil/examples.md" },
   ] },
   { "Guides and notes" = [

@@ -9,8 +9,8 @@ anvil validate  # Inspect the environment or run focused validation
 anvil results   # Query, process, or rerun completed results
 ```
 
-The former `anvil graph` command was removed in v0.30. Task dependencies are
-still validated and resolved automatically by `validate` and `run`.
+Task dependencies are validated and resolved automatically by `validate` and
+`run`; they do not require a separate command.
 
 ## Logging
 
@@ -93,11 +93,16 @@ anvil validate --tasks --processors --providers --auth \
 
 Authentication uses the configuration's provider credential model:
 
-- AWS creates a boto3 session and checks STS identity.
-- Azure acquires an Azure Resource Manager token.
-- GCP reports auth validation as deferred; credentials are built and validated
-  when the provider prepares runtime sessions.
-- GitHub creates the configured token or app client and checks access.
+| Provider | `--auth` behavior |
+| --- | --- |
+| AWS | Creates the base boto3 session and checks STS identity |
+| Azure | Loads the selected credential and acquires an Azure Resource Manager token |
+| Cloudflare | Resolves credentials and validates SDK client construction; permissions are checked during discovery or execution |
+| Datadog | Performs a live API/application-key validation for the configured site |
+| GCP | Reports validation as deferred; credentials are built when runtime sessions are prepared |
+| GitHub | Resolves token or App settings without making an API request |
+| GitLab | Performs a live authenticated API request against the configured instance |
+| PagerDuty | Resolves the token and validates REST client construction without making an API request |
 
 Anvil caches equivalent authentication checks within the command and gives each
 target its own result. Use `--quiet` in CI to suppress validation output and
@@ -135,6 +140,9 @@ anvil run --config-file ./yaml/targets.yaml --exclude target-c
 
 # Force every selected task into dry-run mode.
 anvil run --config-file ./yaml/targets.yaml --dry-run
+
+# Add diagnostic phase timings to result JSON.
+anvil run --config-file ./yaml/targets.yaml --benchmark
 ```
 
 `--include` and `--exclude` are mutually exclusive. `--benchmark` adds detailed
@@ -179,11 +187,13 @@ anvil results \
 
 The run directory must contain `summary.json` and target JSON beneath
 `targets/`. Relative processor output is resolved under that run's `reports/`
-directory.
+directory. Output paths are sanitized and kept beneath `reports/` even when the
+input contains absolute or parent-directory segments.
 
 Targets can also run processors automatically with `post_run`. By default they
 run after successful targets; `run_on_failure: true` enables reports designed to
-handle failed target results.
+handle failed target results. Target-level output filenames are prefixed with
+the configured target name, and collisions receive a numeric suffix.
 
 Built-in processors include a self-contained `html_report` and a
 `sarif_report` for `detect_` task results containing `sarif_findings`.
@@ -228,8 +238,9 @@ anvil results --status failed \
 
 Available filters include `--type {entity,task}`, `--target`, `--entity`,
 `--region`, `--task`, `--status`, `--fields`, and `--limit`. Use `--json` or
-`--jsonl` for structured output. `--status failed` matches any non-success
-status.
+`--jsonl` for structured output. Task statuses are `success`, `error`,
+`interrupted`, or `skipped`; `--status failed` matches `error` and
+`interrupted`.
 
 ## Rerun Failures
 

@@ -2,8 +2,7 @@
 
 Anvil turns each schema v2 configured target into provider-specific execution
 targets, then runs compatible tasks across the resolved region or location
-scope. The same engine pipeline supports AWS accounts, Azure subscriptions, GCP
-projects, GitHub organizations and repositories, and extension providers.
+scope. The same engine pipeline supports every stock and extension provider.
 
 At a high level:
 
@@ -17,7 +16,7 @@ At a high level:
 6. Validate task compatibility, scope, and dependency order.
 7. Execute configured targets concurrently up to `max_parallel_targets`.
 8. Execute resolved entities concurrently up to each target's `max_workers`.
-9. Run region-scoped or target-scoped task streams with optional region
+9. Run configured-target, target, or region task streams with optional region
    concurrency.
 10. Write structured results and run configured processors.
 
@@ -35,14 +34,15 @@ flowchart TD
     H --> I["Resolve provider execution targets"]
     I --> J["Apply include or exclude selection"]
     J --> K["Resolve task scopes and dependencies"]
-    K --> L["Dispatch execution targets<br/>bounded by max_workers"]
-    L --> M["Build target and location session"]
-    M --> N{"Task scope?"}
-    N -->|Target| O["Run once using first location"]
-    N -->|Region| P["Run per location<br/>bounded by max_parallel_regions"]
-    O --> Q["Record entity and task results"]
+    K --> L["Execute the scope-aware dependency graph"]
+    L --> N{"Task scope?"}
+    N -->|Configured target| CU["Run once across the configured target"]
+    N -->|Target| O["Dispatch entities up to max_workers<br/>run once using first location"]
+    N -->|Region| P["Dispatch entities up to max_workers<br/>run per location up to max_parallel_regions"]
+    CU --> Q["Record configured-target, entity, and task results"]
+    O --> Q
     P --> Q
-    Q --> R{"Non-optional failure<br/>with fail_fast?"}
+    Q --> R{"Task failure<br/>with fail_fast?"}
     R -->|Yes| S["Signal cooperative cancellation"]
     R -->|No| T["Continue pending work"]
     S --> U["Build configured-target result"]
@@ -65,10 +65,16 @@ and the CLI.
 | AWS `accounts` | explicitly selected AWS accounts |
 | Azure `tenant` | discovered Azure subscriptions |
 | Azure `subscriptions` | explicitly selected Azure subscriptions |
-| GCP `organization` | reserved; organization discovery is not implemented in v0.30 |
+| Cloudflare `accounts` | discovered or explicitly selected accounts |
+| Cloudflare `zones` | discovered or explicitly selected zones |
+| Datadog `organization` | one configured organization |
+| GCP `organization` | reserved; organization discovery is not currently implemented |
 | GCP `projects` | explicitly selected projects, or accessible project discovery when `include` is omitted |
 | GitHub `organizations` | organization entities for dedicated code search, or discovered repositories beneath selected owners |
 | GitHub `repositories` | selected `owner/repository` targets |
+| GitLab `groups` | discovered or explicitly selected groups |
+| GitLab `projects` | discovered or explicitly selected projects |
+| PagerDuty `account` | one configured account |
 
 Provider-specific IDs and display names are normalized into the runtime fields
 `execution_target_id`, `execution_target_name`, and `execution_target_type`.
@@ -81,17 +87,21 @@ Anvil uses `region` as the common runtime name for a provider location:
 
 - AWS discovers enabled regions and resolves explicit values, `all`, or globs.
 - Azure and GCP resolve configured cloud locations.
-- GitHub uses `global`.
+- Cloudflare, Datadog, GitHub, GitLab, and PagerDuty use `global`.
 
 Region-scoped tasks run once per execution-target/location pair. Target-scoped
 tasks declare `TASK_SCOPE = "target"` and run once per entity with the first
-resolved location. Providers advertise their supported scopes, and validation
-rejects incompatible task/provider combinations before work starts.
+resolved location. AWS additionally supports `TASK_SCOPE = "configured_target"`
+for one invocation across the complete configured YAML target. Providers
+advertise their supported scopes, and validation rejects incompatible
+task/provider combinations before work starts.
 
 Tasks execute in dependency order within each stream. Multiple locations may
 run concurrently up to `max_parallel_regions`, but each location preserves task
-dependency order. Result ordering remains deterministic even when workers
-finish out of order.
+dependency order. Scope-aware dependencies can fan configured-target results
+out to entity or region tasks and fan region results back into a
+configured-target consumer. Result ordering remains deterministic even when
+workers finish out of order.
 
 ## Bounded Concurrency
 
@@ -120,18 +130,18 @@ controls gradually and benchmark against the real task mix.
 
 ## Fail-Fast and Cancellation
 
-A non-optional task failure fails its current task stream. When `fail_fast` is
-enabled, Anvil also signals cancellation to pending entity and location work
-for that configured target.
+A task failure fails its current task stream. When `fail_fast` is enabled,
+Anvil also signals cancellation to pending entity and location work for that
+configured target.
 
 Cancellation is cooperative. Work that has not started can be cancelled;
 already-running tasks are not forcefully terminated. Workers check the shared
 signal before starting more tasks or locations and return structured interrupted
 results where appropriate.
 
-Optional failures remain visible in results but do not automatically fail the
-entity. Tasks whose dependencies failed are recorded as blocked rather than
-executed.
+Tasks whose dependencies failed are recorded as blocked rather than executed.
+Use an `always_run` dependent for cleanup that must execute after an
+unsuccessful dependency settles.
 
 ## Provider Sessions and Authentication
 
@@ -141,10 +151,15 @@ Providers own authentication, discovery, and session construction:
   assumes a role into selected accounts, and creates region-scoped sessions.
 - Azure uses explicit service-principal settings or `DefaultAzureCredential`
   and creates subscription/location sessions.
+- Cloudflare uses token or global API-key credentials and creates account/zone
+  client contexts.
+- Datadog uses API/application key pairs bound to one organization and site.
 - GCP uses a credentials file or application-default credentials and creates
   project/location sessions.
 - GitHub uses tokens, app credentials, profiles, or supported local credential
   fallbacks and creates owner/repository client contexts.
+- GitLab uses private-token or OAuth authentication for group/project clients.
+- PagerDuty uses token or bearer authentication for one account context.
 
 `anvil validate --auth` exercises the provider's access check without running
 tasks. During a run, equivalent credential identities can share a single-flight
@@ -190,7 +205,7 @@ outcomes into a later command.
 
 Results have four useful layers:
 
-- task result: one task outcome for an entity and location
+- task result: one task outcome for a configured target, entity, or location
 - entity result: all task outcomes for one provider execution target
 - target result: all entities for one configured YAML target
 - engine result: the full run across configured targets
