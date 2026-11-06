@@ -223,7 +223,9 @@ availability behavior.
 
 Tasks with target scope run once for an execution target using its first
 resolved location. Region-scoped tasks run once per resolved location. The
-provider declares which scopes it supports.
+provider declares which scopes it supports. AWS also supports configured-target
+scope for one invocation across the complete configured YAML target. See
+[Task Scopes](task-scopes.md) for the selection guide.
 
 ## Concurrency and Failure Controls
 

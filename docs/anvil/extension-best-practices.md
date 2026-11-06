@@ -129,9 +129,12 @@ Provider task best practices:
 - Use singular resource names such as `list_user` or `remove_dns_record`; accept
   arrays through plural metadata keys when selecting multiple resources.
 
-Tasks are region-scoped by default. Declare `TASK_SCOPE = "target"` only when
-the operation should run once per execution target. Do not configure scope in
-YAML. Providers advertise the scopes they support.
+Tasks are region-scoped by default. Declare `TASK_SCOPE = "target"` when the
+operation is global to each resolved execution target. AWS tasks can use
+`TASK_SCOPE = "configured_target"` when work belongs to the original YAML
+target or its shared owner/control plane. Do not configure scope in YAML or use
+scope only to reduce API calls. Follow the [Task Scopes](task-scopes.md)
+decision guide and split tasks that combine different ownership boundaries.
 
 ## Build a Processor
 

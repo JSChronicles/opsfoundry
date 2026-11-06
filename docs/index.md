@@ -6,8 +6,8 @@
         <p class="tagline">this is just the beginning.</p>
       </section>
 
-      <section class="coming-soon" aria-labelledby="coming-soon-title">
-        <h2 id="coming-soon-title">Coming soon</h2>
+      <section class="coming-soon" aria-labelledby="projects-title">
+        <h2 id="projects-title">Projects</h2>
         <ul class="soon-list">
           <li>
             <a class="project-card-link" href="anvil/">
@@ -16,7 +16,17 @@
                 <strong>Anvil</strong>
               </span>
               <p>A provider-aware execution engine for running Python tasks across cloud and GitHub target fleets.</p>
-              <span class="status">In testing</span>
+              <span class="status">Available</span>
+            </a>
+          </li>
+          <li>
+            <a class="project-card-link" href="coding-best-practices/">
+              <span class="soon-project">
+                <img class="soon-icon" src="images/coding-best-practices.png" alt="" aria-hidden="true">
+                <strong>Coding Best Practices</strong>
+              </span>
+              <p>Provider-neutral skills that help AI coding agents apply practical standards across Python, PowerShell, Terraform, and more.</p>
+              <span class="status">Available</span>
             </a>
           </li>
           <li>

@@ -27,21 +27,24 @@ provider that supports their declared scope.
 
 ## AWS Tasks
 
-| Task | Purpose and important metadata |
-| --- | --- |
-| `compare_asg_to_cluster_instances` | Compare ECS container instances with `<cluster>-asg`; requires `clusters`, optionally `ecs_region` |
-| `count_subnets_with_timings` | Count subnets and expose API timing/retry data |
-| `count_vpc` | Count and list VPC IDs in the current Region |
-| `detect_deprecated_lambda_runtimes` | Return SARIF-compatible findings; requires `runtimes` |
-| `get_aws_inline_policies` | Collect IAM and Identity Center inline policies; optional `types` (`user`, `role`, `group`, `sso`) |
-| `get_organization_structure` | Collect OUs, accounts, SCPs, and Control Tower controls from the management account |
-| `list_lambdas_by_runtime` | List Lambda functions matching required `runtimes` |
-| `remove_iam_user` | Remove resources attached to required `user_name`; honors dry run |
-| `remove_idc_user` | Remove selected Identity Center users; accepts `users`, `status`, and optional `identity_center_region` |
-| `remove_missing_group_assignments` | Remove assignments for missing Identity Center groups; optional `identity_center_region` |
+| Task | Scope | Purpose and important metadata |
+| --- | --- | --- |
+| `compare_asg_to_cluster_instances` | `region` | Compare ECS container instances with `<cluster>-asg`; requires `clusters`, optionally `ecs_region` |
+| `count_subnets_with_timings` | `region` | Count subnets and expose API timing/retry data |
+| `count_vpc` | `region` | Count and list VPC IDs in the current Region |
+| `detect_deprecated_lambda_runtimes` | `region` | Return SARIF-compatible findings; requires `runtimes` |
+| `get_aws_inline_policies` | `target` | Collect IAM user, role, and group inline policies; optional `types` (`user`, `role`, `group`) |
+| `get_aws_sso_inline_policies` | `configured_target` | Collect IAM Identity Center permission-set inline policies; optional `identity_center_region` |
+| `get_organization_structure` | `configured_target` | Collect OUs, accounts, SCPs, and Control Tower controls from the management account |
+| `list_lambdas_by_runtime` | `region` | List Lambda functions matching required `runtimes` |
+| `remove_cloudformation_stack` | `target` | Remove exact stacks selected per account with optional retention of stuck resources; honors dry run |
+| `remove_iam_role` | `target` | Remove required IAM `roles` after cleaning attached resources; honors dry run |
+| `remove_iam_user` | `target` | Remove required IAM `users` after cleaning their attached resources; honors dry run |
+| `remove_idc_user` | `configured_target` | Remove selected Identity Center users; accepts `users`, `status`, and optional `identity_center_region` |
+| `remove_missing_group_assignments` | `configured_target` | Remove assignments for missing Identity Center groups; optional `identity_center_region` |
 
-AWS stock tasks are region-scoped. Management- or Identity-Center-owner tasks
-skip entities that do not own the relevant organization-wide service.
+See [Task Scopes](task-scopes.md) for why account-wide and shared-control-plane
+tasks must not use the default region scope.
 
 ## Azure and GCP Tasks
 

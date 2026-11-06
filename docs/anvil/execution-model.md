@@ -96,6 +96,9 @@ for one invocation across the complete configured YAML target. Providers
 advertise their supported scopes, and validation rejects incompatible
 task/provider combinations before work starts.
 
+See [Task Scopes](task-scopes.md) for the scope decision guide and invocation
+examples.
+
 Tasks execute in dependency order within each stream. Multiple locations may
 run concurrently up to `max_parallel_regions`, but each location preserves task
 dependency order. Scope-aware dependencies can fan configured-target results

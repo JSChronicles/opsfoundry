@@ -186,6 +186,63 @@ body:has(.landing) .md-content__inner::before {
   line-height: 1.15;
 }
 
+.product-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  margin: 0 0 2rem;
+  padding: 24px;
+  border: 1px solid var(--ops-line);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(21, 27, 35, 0.98), rgba(13, 17, 23, 0.92));
+}
+
+.product-hero img {
+  width: 88px;
+  height: 88px;
+}
+
+.product-hero h1,
+.product-hero p {
+  margin: 0;
+}
+
+.product-hero p {
+  margin-top: 8px;
+  color: var(--ops-muted);
+}
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 1rem 0 2rem;
+}
+
+.skill-card {
+  padding: 18px;
+  border: 1px solid var(--ops-line);
+  border-radius: 10px;
+  background: var(--ops-panel);
+}
+
+.skill-card h3 {
+  margin: 0 0 8px;
+}
+
+.skill-card p {
+  margin: 0;
+  color: var(--ops-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .skill-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 520px) {
   .landing-main {
     place-items: start center;
@@ -194,5 +251,9 @@ body:has(.landing) .md-content__inner::before {
 
   .landing-hero {
     padding-bottom: 32px;
+  }
+
+  .product-hero {
+    grid-template-columns: 1fr;
   }
 }

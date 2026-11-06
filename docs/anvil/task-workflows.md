@@ -144,6 +144,9 @@ YAML. Region-scoped tasks run for every resolved location. Target-scoped tasks
 run once per execution target. Providers that support `configured_target`
 tasks can also run once for the complete YAML target.
 
+See [Task Scopes](task-scopes.md) for how to choose a scope before designing
+cross-scope dependencies.
+
 When scopes differ, Anvil maps dependency results across the execution graph:
 
 - a configured-target producer can fan out to target or region consumers;

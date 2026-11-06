@@ -110,7 +110,8 @@ they require and provide actionable dependency errors.
 
 ## Task Scope
 
-Tasks are region-scoped by default. A module can opt into target scope:
+Tasks are region-scoped by default. A module can opt into another
+provider-supported scope:
 
 ```python
 TASK_SCOPE = "target"
@@ -122,16 +123,9 @@ supports `TASK_SCOPE = "configured_target"` for one invocation across the
 complete configured YAML target. A task can run only when the selected provider
 advertises support for its declared scope.
 
-| Provider | Supported task scopes |
-| --- | --- |
-| AWS | `configured_target`, `region` |
-| Azure | `target`, `region` |
-| Cloudflare | `target`, `region` |
-| Datadog | `target`, `region` |
-| GCP | `target`, `region` |
-| GitHub | `target`, `region` |
-| GitLab | `target`, `region` |
-| PagerDuty | `target`, `region` |
+Choose scope from the API's resource ownership boundary, not as a performance
+setting. See [Task Scopes](task-scopes.md) for the decision guide, provider
+support table, safety considerations, and examples.
 
 ## Detail Documentation
 

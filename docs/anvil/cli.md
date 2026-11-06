@@ -1,8 +1,9 @@
 # CLI
 
-Anvil exposes four primary commands:
+Anvil exposes a version flag and four primary commands:
 
 ```console
+anvil --version   # Print the installed Anvil version
 anvil run       # Execute schema v2 provider-target YAML
 anvil list      # List tasks, processors, and providers
 anvil validate  # Inspect the environment or run focused validation
@@ -21,6 +22,28 @@ or `CRITICAL`.
 anvil run --config-file ./yaml/targets.yaml --log-level INFO
 anvil validate --auth --config-file ./yaml/targets.yaml --log-level WARNING
 ```
+
+## Interactive Progress
+
+`anvil run` shows a live provider-target table in an interactive terminal while
+keeping logs visible above it. The table includes queued, running, completed,
+failed, and skipped target states. CI jobs and redirected output automatically
+use normal line-oriented logging.
+
+Choose the behavior explicitly with `--progress`:
+
+```console
+anvil run --config-file ./yaml/targets.yaml --progress auto
+anvil run --config-file ./yaml/targets.yaml --progress bar
+anvil run --config-file ./yaml/targets.yaml --progress off
+```
+
+- `auto` enables the live display only for an interactive terminal.
+- `bar` forces the live display.
+- `off` disables it.
+
+The same option is available with `anvil results --rerun`. It affects the rerun
+only and is ignored for result queries.
 
 ## List Components
 
@@ -259,3 +282,9 @@ Further narrow a rerun with `--target`, `--entity`, `--region`, or `--task`.
 Use `--dry-run` to force dry-run behavior and `--benchmark` to collect rerun
 timings. Report-shaping switches such as `--type`, `--fields`, `--limit`,
 `--json`, and `--jsonl` cannot be combined with `--rerun`.
+
+```console
+anvil results --status failed \
+  --results-file ./results/aws/run-a/results.jsonl \
+  --rerun --progress auto
+```

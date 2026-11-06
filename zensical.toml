@@ -10,6 +10,7 @@ nav = [
     { "Execution Model" = "anvil/execution-model.md" },
     { "CLI" = "anvil/cli.md" },
     { "Task Contract" = "anvil/task-contract.md" },
+    { "Task Scopes" = "anvil/task-scopes.md" },
     { "Built-in Components" = "anvil/built-in-components.md" },
     { "Configuration" = "anvil/configuration.md" },
     { "Providers" = "anvil/providers.md" },
@@ -19,6 +20,7 @@ nav = [
     { "Extension Best Practices" = "anvil/extension-best-practices.md" },
     { "Examples" = "anvil/examples.md" },
   ] },
+  { "Coding Best Practices" = "coding-best-practices/index.md" },
   { "Guides and notes" = [
     { "Overview" = "guides/index.md" },
     { "AWS" = [

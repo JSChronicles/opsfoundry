@@ -35,7 +35,7 @@ reporting.
 
 ## Installation
 
-Anvil 0.31 requires Python 3.14. The base package includes AWS support:
+Anvil 0.36.1 requires Python 3.14. The base package includes AWS support:
 
 ```console
 pip install anvil
@@ -52,6 +52,37 @@ pip install "anvil[github]"
 pip install "anvil[gitlab]"
 pip install "anvil[pagerduty]"
 ```
+
+Install all optional provider dependencies at once with:
+
+```console
+pip install "anvil[all]"
+```
+
+## Run Experience
+
+Interactive terminals show a live table of queued and running provider targets.
+Anvil automatically falls back to line-oriented logs in CI or when output is
+redirected. Use `--progress bar` to force the live display or `--progress off`
+to disable it.
+
+```console
+anvil run --config-file ./yaml/targets.yaml --progress auto
+```
+
+## Container Image
+
+The official multi-platform image includes every first-party provider
+dependency and uses the regular Anvil CLI:
+
+```console
+docker run --rm ghcr.io/jschronicles/anvil:0.36.1 --version
+```
+
+Mount the working directory when configuration and results need to cross the
+container boundary. See the
+[repository container guide](https://github.com/JSChronicles/anvil#container-image)
+for the complete example, credential guidance, and image-tag policy.
 
 ## Repository Template
 
